@@ -5,8 +5,7 @@
 > 一键安装fail2ban，配置sshd防暴力破解
 
 ```shell
-# setup_fail2ban.sh
-sudo bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_fail2ban.sh)
+bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_fail2ban.sh)
 ```
 
 ### 配置讲解
