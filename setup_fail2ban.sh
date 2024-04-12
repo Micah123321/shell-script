@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 检测系统类型
-if [ -f /etc/debian_version ]; then
+if [ -f /etc/debian_version ] || grep -qi ubuntu /etc/os-release; then
     OS="Debian"
 elif [ -f /etc/redhat-release ]; then
     OS="CentOS"
@@ -13,8 +13,9 @@ fi
 # 获取当前SSH连接的端口
 SSH_PORT=$(ss -tnlp | grep sshd | grep -Po ':\K\d+' | head -1)
 
-# Debian系列的安装和配置
+# Debian系列和Ubuntu的安装和配置
 if [ "$OS" = "Debian" ]; then
+    apt-get update
     apt-get install -y fail2ban
     systemctl start fail2ban
     systemctl enable fail2ban
@@ -35,7 +36,7 @@ maxretry = 3\" > /etc/fail2ban/jail.local"
 
 # CentOS系列的安装和配置
 elif [ "$OS" = "CentOS" ]; then
-    yum install fail2ban -y
+    yum install -y fail2ban
     systemctl start fail2ban
     systemctl enable fail2ban
     sudo cp /etc/fail2ban/jail.{conf,local}
