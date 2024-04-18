@@ -53,8 +53,19 @@ optimize_dns() {
 # 调用优化DNS函数
 optimize_dns
 
+
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 112695A0E562B32A
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 54404762BBB6E853
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6ED0E7B82643E131
+
+apt update
+
 # 执行更新操作
-apt update && apt upgrade -y && apt dist-upgrade -y && apt full-upgrade -y && apt autoremove -y
+apt upgrade -y
+apt dist-upgrade -y
+apt full-upgrade -y
+apt autoremove -y
 
 # 安装默认工具
 apt install -y lsof curl git sudo wget net-tools screen iperf3 dnsutils telnet openssl btop
