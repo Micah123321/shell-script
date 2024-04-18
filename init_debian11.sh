@@ -54,14 +54,13 @@ optimize_dns() {
 optimize_dns
 
 
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 112695A0E562B32A
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 54404762BBB6E853
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6ED0E7B82643E131
-
-apt update
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 112695A0E562B32A
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 54404762BBB6E853
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6ED0E7B82643E131
 
 # 执行更新操作
+apt update
 apt upgrade -y
 apt dist-upgrade -y
 apt full-upgrade -y
@@ -70,36 +69,55 @@ apt autoremove -y
 # 安装默认工具
 apt install -y lsof curl git sudo wget net-tools screen iperf3 dnsutils telnet openssl btop
 
+
+
 # 安装XrayR
-# shellcheck disable=SC2162
-read -p "Do you want to install XrayR? (y/n) " install_xrayr
-if [[ $install_xrayr == "y" || $install_xrayr == "Y" ]]; then
-    wget -N https://ghp.535888.xyz/https://raw.githubusercontent.com/wyx2685/XrayR-release/master/install.sh && bash install.sh
+if ! command -v xrayr &> /dev/null; then
+    # shellcheck disable=SC2162
+    read -p "Do you want to install XrayR? (y/n) " -i y -e install_xrayr
+    install_xrayr=${install_xrayr:-y}
+    if [[ $install_xrayr == "y" || $install_xrayr == "Y" ]]; then
+        wget -N https://ghp.535888.xyz/https://raw.githubusercontent.com/wyx2685/XrayR-release/master/install.sh && bash install.sh
+    fi
+else
+    echo "XrayR is already installed. Skipping installation."
 fi
-# 开启BBR
-wget -O tcpx.sh "https://ghp.535888.xyz/https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
 
 # 安装Fail2Ban
-# shellcheck disable=SC2162
-read -p "Do you want to install Fail2Ban? (y/n) " install_f2b
-if [[ $install_f2b == "y" || $install_f2b == "Y" ]]; then
-    bash <(curl -L -s https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_fail2ban.sh)
+if ! command -v fail2ban-client &> /dev/null; then
+    # shellcheck disable=SC2162
+    read -p "Do you want to install Fail2Ban? (y/n) " -i y -e install_f2b
+    install_f2b=${install_f2b:-y}
+    if [[ $install_f2b == "y" || $install_f2b == "Y" ]]; then
+        bash <(curl -L -s https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_fail2ban.sh)
+    fi
+else
+    echo "Fail2Ban is already installed. Skipping installation."
 fi
 
 # 询问用户是否安装Docker
-# shellcheck disable=SC2162
-read -p "Do you want to install Docker? (y/n) " install_docker
-if [[ $install_docker == "y" || $install_docker == "Y" ]]; then
-    wget -qO- get.docker.com | bash
-    systemctl enable docker
-    systemctl start docker
-    curl -L "https://ghp.535888.xyz/https://github.com/docker/compose/releases/download/1.26.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+if ! command -v docker &> /dev/null; then
+    # shellcheck disable=SC2162
+    read -p "Do you want to install Docker? (y/n) " -i y -e install_docker
+    install_docker=${install_docker:-y}
+    if [[ $install_docker == "y" || $install_docker == "Y" ]]; then
+        wget -qO- get.docker.com | bash
+        systemctl enable docker
+        systemctl start docker
+        curl -L "https://ghp.535888.xyz/https://github.com/docker/compose/releases/download/1.26.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+    fi
+else
+    echo "Docker is already installed. Skipping installation."
 fi
+
+
+
 
 # 设置时区为上海
 timedatectl set-timezone Asia/Shanghai && dpkg-reconfigure locales
-
+# 开启BBR
+wget -O tcpx.sh "https://ghp.535888.xyz/https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
 # 清理Debian系统
 clean_debian() {
     apt autoremove --purge -y
