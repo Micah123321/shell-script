@@ -1,5 +1,28 @@
 # shell-script
 
+## init_debian11
+
+> 初始化Debian 11系统
+
+```shell
+bash <(wget -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) [--non-interactive]
+```
+
+### 脚本讲解
+
+这个脚本执行了以下操作：
+
+1. 更新了Debian系统的软件源列表。
+2. 优化了DNS服务器设置，以便使用Google的DNS服务。
+3. 执行了系统更新和升级，包括自动移除不再需要的软件包。
+4. 安装了一系列常用工具，如lsof、curl、git等。
+5. 检查并安装了XrayR，如果用户同意。
+6. 检查并安装了Fail2Ban，如果用户同意。
+7. 检查并安装了Docker及Docker Compose，如果用户同意。
+8. 设置了系统时区为上海，并配置了BBR加速。
+9. 清理了系统，包括移除不再需要的软件包和内核。
+10. 收集了系统信息，如系统版本、CPU型号、内存使用情况等，并显示给用户。
+
 ## setup_fail2ban
 
 > 一键安装fail2ban，配置sshd防暴力破解
@@ -45,3 +68,6 @@ maxretry = 3
 - `maxretry = 3`设置了在`findtime`指定的时间窗口内允许的最大失败尝试次数。超过这个次数的失败尝试将导致来源IP被封禁。
 
 通过这些设置，Fail2Ban能够有效地监控SSH登录尝试，并在检测到恶意行为时自动封禁来源IP地址。这样可以有效地保护服务器免受暴力破解的攻击。
+
+
+
