@@ -44,6 +44,18 @@ EOF
 
 # 函数：优化DNS服务器
 optimize_dns() {
+  # 选择是否需要优化DNS服务器
+  if [ "$INTERACTIVE_MODE" == true ]; then
+      read -p "Do you want to optimize DNS servers? (y/n) " -i y -e optimize_dns
+      optimize_dns=${optimize_dns:-y}
+  else
+      optimize_dns="y"
+  fi
+
+  if [[ $optimize_dns == "n" || $optimize_dns == "N" ]]; then
+      return
+  fi
+
     # 使用curl检查IPv6连接
     if ping6 -c 1 google.com > /dev/null 2>&1; then
         IPV6_AVAILABLE=true
