@@ -45,14 +45,14 @@ EOF
 # 函数：优化DNS服务器
 optimize_dns() {
     # 使用curl检查IPv6连接
-    if curl -6 -s google.com > /dev/null 2>&1; then
+    if ping6 -c 1 google.com > /dev/null 2>&1; then
         IPV6_AVAILABLE=true
     else
         IPV6_AVAILABLE=false
     fi
 
     # 使用curl检查IPv4连接
-    if curl -4 -s google.com > /dev/null 2>&1; then
+    if ping -c 1 google.com > /dev/null 2>&1; then
         IPV4_AVAILABLE=true
     else
         IPV4_AVAILABLE=false
@@ -86,7 +86,7 @@ install_base_tools() {
 # 函数：安装XrayR
 install_xrayr() {
     if ! command -v xrayr &> /dev/null; then
-        if [ "$INTERACTIVE_MODE" = true ]; then
+        if [ "$INTERACTIVE_MODE" == true ]; then
             read -p "Do you want to install XrayR? (y/n) " -i y -e install_xrayr
             install_xrayr=${install_xrayr:-y}
         else
@@ -104,7 +104,7 @@ install_xrayr() {
 # 函数：安装Fail2Ban
 install_fail2ban() {
     if ! command -v fail2ban-client &> /dev/null; then
-        if [ "$INTERACTIVE_MODE" = true ]; then
+        if [ "$INTERACTIVE_MODE" == true ]; then
             read -p "Do you want to install Fail2Ban? (y/n) " -i y -e install_f2b
             install_f2b=${install_f2b:-y}
         else
@@ -122,7 +122,7 @@ install_fail2ban() {
 # 函数：安装Docker
 install_docker() {
     if ! command -v docker &> /dev/null; then
-        if [ "$INTERACTIVE_MODE" = true ]; then
+        if [ "$INTERACTIVE_MODE" == true ]; then
             read -p "Do you want to install Docker? (y/n) " -i y -e install_docker
             install_docker=${install_docker:-y}
         else
@@ -150,6 +150,12 @@ set_timezone_shanghai() {
 
 # 函数：开启BBR
 enable_bbr() {
+  # 如果
+  congestion_algorithm=$(sysctl -n net.ipv4.tcp_congestion_control)
+  if [ "$congestion_algorithm" == "bbr" ]; then
+      echo "BBR is already enabled. Skipping."
+      return
+  fi
     wget -O tcpx.sh "https://ghp.535888.xyz/https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
     handle_error $? "Failed to enable BBR."
 }
