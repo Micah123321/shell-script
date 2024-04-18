@@ -27,6 +27,17 @@ check_root() {
 
 # 函数：更新源列表
 update_sources_list() {
+    # 选择是否需要更新源列表
+    if [ "$INTERACTIVE_MODE" == true ]; then
+        read -p "Do you want to update sources list? (y/n) " -i y -e update_sources
+        update_sources=${update_sources:-y}
+    else
+        update_sources="y"
+    fi
+
+    if [[ $update_sources == "n" || $update_sources == "N" ]]; then
+        return
+    fi
     cat > /etc/apt/sources.list << EOF
 deb http://deb.debian.org/debian/ bullseye main
 deb-src http://deb.debian.org/debian/ bullseye main
@@ -156,7 +167,7 @@ install_docker() {
 
 # 函数：设置时区为上海
 set_timezone_shanghai() {
-    timedatectl set-timezone Asia/Shanghai && dpkg-reconfigure locales
+    timedatectl set-timezone Asia/Shanghai
     handle_error $? "Failed to set timezone to Asia/Shanghai."
 }
 
