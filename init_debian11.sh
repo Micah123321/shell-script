@@ -100,7 +100,18 @@ optimize_dns() {
 
 # 函数：安装基础工具
 install_base_tools() {
-    apt update && apt upgrade -y && apt dist-upgrade -y && apt full-upgrade -y && apt autoremove -y
+  # 密钥
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 112695A0E562B32A
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 54404762BBB6E853
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0E98404D386FA1D9
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6ED0E7B82643E131
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 605C66F00D6C9793
+  # 安装
+    apt update
+    apt upgrade -y
+    apt dist-upgrade -y
+    apt full-upgrade -y
+    apt autoremove -y
     handle_error $? "Failed to update and upgrade system."
     apt install -y lsof curl git sudo wget net-tools screen iperf3 dnsutils telnet openssl btop
     handle_error $? "Failed to install base tools."
