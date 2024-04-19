@@ -23,6 +23,20 @@ bash <(wget -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah1
 9. 清理了系统，包括移除不再需要的软件包和内核。
 10. 收集了系统信息，如系统版本、CPU型号、内存使用情况等，并显示给用户。
 
+## debian9_11
+
+> Debian 9直升11脚本
+
+```shell
+bash <(wget -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/debian9_11.sh)
+```
+
+### 脚本讲解
+
+- 更新为Debian 10系统的软件源列表。
+- 执行更新操作
+- 再继续同样对11的操作
+
 ## setup_fail2ban
 
 > 一键安装fail2ban，配置sshd防暴力破解
