@@ -28,7 +28,7 @@ bash <(wget -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah1
 > Debian 9直升11脚本
 
 ```shell
-bash <(wget -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/debian9_11.sh)
+bash <(wget --no-check-certificate -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/debian9_11.sh)
 ```
 
 ### 脚本讲解
