@@ -27,6 +27,12 @@ check_root() {
 
 # 函数：更新源列表
 update_sources_list() {
+      # 判断如果/etc/apt/sources.list已经包含deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free则不更新
+    if grep -q "deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free" /etc/apt/sources.list; then
+        echo "Sources list is already updated. Skipping update."
+        return
+    fi
+
     # 选择是否需要更新源列表
     if [ "$INTERACTIVE_MODE" == true ]; then
         read -p "Do you want to update sources list? (y/n) " -i y -e update_sources
@@ -34,6 +40,7 @@ update_sources_list() {
     else
         update_sources="y"
     fi
+
 
     if [[ $update_sources == "n" || $update_sources == "N" ]]; then
         return
