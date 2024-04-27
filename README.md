@@ -6,6 +6,9 @@
 
 ```shell
 bash <(wget -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) [--non-interactive]
+
+# 或者
+bash <(curl -sL https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) [--non-interactive]
 ```
 
 ### 脚本讲解

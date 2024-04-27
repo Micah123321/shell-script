@@ -42,7 +42,10 @@ update_sources_list() {
     fi
 
 
-    if [[ $update_sources == "n" || $update_sources == "N" ]]; then
+    if [[ $update_sources == "y" || $update_sources == "Y" ]]; then
+        # 输出提示信息
+        echo "Updating sources list..."
+    else
         return
     fi
     cat > /etc/apt/sources.list << EOF
@@ -70,9 +73,13 @@ optimize_dns() {
       optimize_dns="y"
   fi
 
-  if [[ $optimize_dns == "n" || $optimize_dns == "N" ]]; then
-      return
-  fi
+
+      if [[ $optimize_dns == "y" || $optimize_dns == "Y" ]]; then
+          # 输出提示信息
+          echo "Optimizing DNS servers..."
+      else
+          return
+      fi
 
     # 使用curl检查IPv6连接
     if ping6 -c 1 google.com > /dev/null 2>&1; then
