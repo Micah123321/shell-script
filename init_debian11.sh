@@ -149,7 +149,7 @@ install_xrayr() {
             install_xrayr="y"
         fi
         if [[ $install_xrayr == "y" || $install_xrayr == "Y" ]]; then
-            wget -N https://ghp.535888.xyz/https://raw.githubusercontent.com/wyx2685/XrayR-release/master/install.sh && bash install.sh
+            bash <(curl -L -s https://ghp.535888.xyz/https://raw.githubusercontent.com/wyx2685/XrayR-release/master/install.sh) && bash install.sh
             handle_error $? "Failed to install XrayR."
         fi
     else
@@ -212,7 +212,7 @@ enable_bbr() {
       echo "BBR is already enabled. Skipping."
       return
   fi
-    wget -O tcpx.sh "https://ghp.535888.xyz/https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
+    curl -o tcpx.sh "https://ghp.535888.xyz/https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
     handle_error $? "Failed to enable BBR."
 }
 
