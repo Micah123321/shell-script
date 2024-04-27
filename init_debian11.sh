@@ -48,6 +48,11 @@ update_sources_list() {
     else
         return
     fi
+
+    # 改之前先备份一份
+    cp /etc/apt/sources.list /etc/apt/sources.list.bak
+    # 输出备份文件路径
+    echo "Backup file: /etc/apt/sources.list.bak"
     cat > /etc/apt/sources.list << EOF
 deb http://deb.debian.org/debian/ bullseye main
 deb-src http://deb.debian.org/debian/ bullseye main
@@ -94,6 +99,10 @@ optimize_dns() {
     else
         IPV4_AVAILABLE=false
     fi
+    # 改之前先备份一份
+    cp /etc/resolv.conf /etc/resolv.conf.bak
+    # 输出备份文件路径
+    echo "Backup file: /etc/resolv.conf.bak"
 
     # 根据可用的IP版本设置DNS
     if [ "$IPV6_AVAILABLE" = true ] && [ "$IPV4_AVAILABLE" = true ]; then
