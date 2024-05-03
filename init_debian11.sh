@@ -221,7 +221,7 @@ enable_bbr() {
       echo "BBR is already enabled. Skipping."
       return
   fi
-    curl -o tcpx.sh "https://ghp.535888.xyz/https://github.com/ylx2016/Linux-NetSpeed/raw/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
+    curl -o tcpx.sh "https://ghp.535888.xyz/https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
     handle_error $? "Failed to enable BBR."
 }
 
@@ -342,11 +342,11 @@ display_system_info() {
     update_sources_list
     optimize_dns
     install_base_tools
+    enable_bbr
     install_xrayr
     install_fail2ban
     install_docker
     set_timezone_shanghai
-    enable_bbr
     clean_debian
     get_system_info
     get_cpu_model
