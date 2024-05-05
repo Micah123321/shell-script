@@ -335,6 +335,31 @@ display_system_info() {
     echo ""
 }
 
+# 函数：开启WARP流媒体分流
+enable_warp_streaming() {
+    # 检查warp命令是否已存在
+    if command -v warp &> /dev/null; then
+        echo "WARP service is already installed. Skipping download and execution."
+        return
+    fi
+
+    # 继续交互模式的判断和执行
+    if [ "$INTERACTIVE_MODE" == true ]; then
+        read -p "Do you want to enable WARP streaming? (y/n) " -i y -e warp_choice
+        warp_choice=${warp_choice:-y}
+    else
+        warp_choice="y"
+    fi
+
+    if [[ $warp_choice == "y" || $warp_choice == "Y" ]]; then
+        echo "Enabling WARP streaming..."
+        wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh && chmod +x menu.sh && sudo ./menu.sh e
+        handle_error $? "Failed to enable WARP streaming."
+    else
+        echo "WARP streaming setup skipped."
+    fi
+}
+
 
 # 主执行逻辑
 {
@@ -347,6 +372,7 @@ display_system_info() {
     install_fail2ban
     install_docker
     set_timezone_shanghai
+    enable_warp_streaming
     clean_debian
     get_system_info
     get_cpu_model
