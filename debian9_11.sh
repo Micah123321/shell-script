@@ -24,4 +24,11 @@ apt dist-upgrade -y
 # 执行 init_debian11 脚本
 bash <(wget -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh)
 
-# 脚本结束
+# 安装内核
+apt install linux-image-cloud-amd64 -y
+# 找到并卸载除了5.10.xxxx-cloud-amd64以外的所有内核
+dpkg --list | grep linux-image | grep -v "5.10.*cloud-amd64" | awk '{ print $2 }' | xargs sudo apt-get -y purge
+# 选no
+apt autoremove  -y
+apt autoclean -y
+reboot

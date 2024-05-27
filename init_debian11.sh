@@ -186,6 +186,12 @@ install_fail2ban() {
 
 # 函数：安装Docker
 install_docker() {
+      # Check if the system has more than 256MB of RAM
+      total_memory=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+      if [ "$total_memory" -le 262144 ]; then
+          echo "Not enough memory to install Docker. Requires more than 256MB of RAM."
+          return
+      fi
     if ! command -v docker &> /dev/null; then
         if [ "$INTERACTIVE_MODE" == true ]; then
             read -p "Do you want to install Docker? (y/n) " -i y -e install_docker
@@ -372,7 +378,7 @@ enable_warp_streaming() {
     install_fail2ban
     install_docker
     set_timezone_shanghai
-    enable_warp_streaming
+#    enable_warp_streaming
     clean_debian
     get_system_info
     get_cpu_model
