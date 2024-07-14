@@ -158,8 +158,7 @@ install_xrayr() {
             install_xrayr="y"
         fi
         if [[ $install_xrayr == "y" || $install_xrayr == "Y" ]]; then
-            wget -N https://ghp.535888.xyz/https://raw.githubusercontent.com/micah123321/XrayR-release/master/install.sh && bash install.sh v1.0
-            xrayr update
+            wget -N https://ghp.535888.xyz/https://raw.githubusercontent.com/micah123321/XrayR-release/master/install.sh && bash install.sh v1.0 && xrayr update
             handle_error $? "Failed to install XrayR."
         fi
     else
