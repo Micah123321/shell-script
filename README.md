@@ -31,7 +31,7 @@ bash <(curl -sL https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah12
 > Debian 9直升11脚本
 
 ```shell
-bash <(wget --no-check-certificate -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/debian9_11.sh)
+apt install -y curl && bash <(curl -L -s https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/debian9_11.sh)
 ```
 
 ### 脚本讲解
@@ -86,5 +86,23 @@ maxretry = 3
 
 通过这些设置，Fail2Ban能够有效地监控SSH登录尝试，并在检测到恶意行为时自动封禁来源IP地址。这样可以有效地保护服务器免受暴力破解的攻击。
 
+## gost文件替换重启脚本
+
+> 一键替换gost文件并重启
+
+```shell
+bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/gost_replace.sh)
+```
+
+### 脚本讲解
+
+这个脚本的主要流程如下：
+
+1. 从GitHub下载配置文件并保存到`/etc/gost/rawconf`。
+2. 删除旧的`/etc/gost/config.json`文件。
+3. 根据`/etc/gost/rawconf`文件的内容生成新的`/etc/gost/config.json`文件。
+4. 重启gost服务以应用新的配置。
+
+通过这个脚本，你可以方便地从GitHub上管理和更新gost的配置文件。
 
 
