@@ -186,12 +186,13 @@ install_fail2ban() {
 
 # 函数：安装Docker
 install_docker() {
-      # Check if the system has more than 256MB of RAM
-      total_memory=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-      if [ "$total_memory" -le 262144 ]; then
-          echo "Not enough memory to install Docker. Requires more than 256MB of RAM."
-          return
-      fi
+    # Check if the system has more than 512MB of RAM
+    total_memory=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+    if [ "$total_memory" -le 524288 ]; then
+        echo "Not enough memory to install Docker. Requires more than 512MB of RAM."
+        return
+    fi
+
     if ! command -v docker &> /dev/null; then
         if [ "$INTERACTIVE_MODE" == true ]; then
             read -p "Do you want to install Docker? (y/n) " -i y -e install_docker
@@ -199,6 +200,7 @@ install_docker() {
         else
             install_docker="y"
         fi
+
         if [[ $install_docker == "y" || $install_docker == "Y" ]]; then
             wget -qO- get.docker.com | bash
             handle_error $? "Failed to install Docker."
@@ -212,6 +214,7 @@ install_docker() {
         echo "Docker is already installed. Skipping installation."
     fi
 }
+
 
 # 函数：设置时区为上海
 set_timezone_shanghai() {
