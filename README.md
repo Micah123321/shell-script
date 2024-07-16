@@ -111,4 +111,12 @@ bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/M
 bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_repocket.sh)
 ```
 
+## repocket一键卸载脚本
+
+> 一键卸载repocket
+
+```shell
+bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/uninstall_repocket.sh)
+```
+
 
