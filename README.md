@@ -103,3 +103,12 @@ bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/M
 通过这个脚本，你可以方便地从GitHub上管理和更新gost的配置文件。
 
 
+## repocket一键安装脚本
+
+> 一键安装repocket
+
+```shell
+bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_repocket.sh)
+```
+
+
