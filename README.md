@@ -88,7 +88,9 @@ maxretry = 3
 > 一键替换gost文件并重启
 
 ```shell
+
 bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/gost_replace.sh)
+
 ```
 
 ### 脚本讲解
