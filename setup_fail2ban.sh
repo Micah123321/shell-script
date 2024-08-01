@@ -52,5 +52,5 @@ bantime  = 1d
 findtime  = 5m
 maxretry = 3\" > /etc/fail2ban/jail.local"
     systemctl restart fail2ban
-    systemctl status fail2ban
+#    systemctl status fail2ban
 fi
