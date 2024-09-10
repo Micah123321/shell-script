@@ -5,7 +5,7 @@
 > 初始化Debian 11系统
 
 ```shell
-apt install -y curl && bash <(curl -sL https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) [--non-interactive]
+apt install -y curl && bash <(curl -sL https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) [--non-interactive]
 ```
 
 ### 脚本讲解
@@ -28,7 +28,7 @@ apt install -y curl && bash <(curl -sL https://ghp.535888.xyz/https://raw.github
 > Debian 9直升11脚本
 
 ```shell
-apt install -y curl && bash <(curl -L -s https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/debian9_11.sh)
+apt install -y curl && bash <(curl -L -s https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/debian9_11.sh)
 ```
 
 ### 脚本讲解

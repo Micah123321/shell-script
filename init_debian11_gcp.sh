@@ -158,7 +158,7 @@ install_xrayr() {
             install_xrayr="y"
         fi
         if [[ $install_xrayr == "y" || $install_xrayr == "Y" ]]; then
-            wget -N https://ghp.535888.xyz/https://raw.githubusercontent.com/micah123321/XrayR-release/master/install.sh && bash install.sh v1.0 && xrayr update
+            wget -N https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/micah123321/XrayR-release/master/install.sh && bash install.sh v1.0 && xrayr update
             handle_error $? "Failed to install XrayR."
         fi
     else
@@ -176,7 +176,7 @@ install_fail2ban() {
             install_f2b="y"
         fi
         if [[ $install_f2b == "y" || $install_f2b == "Y" ]]; then
-            bash <(curl -L -s https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_fail2ban.sh)
+            bash <(curl -L -s https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_fail2ban.sh)
             handle_error $? "Failed to install Fail2Ban."
         fi
     else
@@ -204,7 +204,7 @@ install_docker() {
             handle_error $? "Failed to install Docker."
             systemctl enable docker
             systemctl start docker
-            curl -L "https://ghp.535888.xyz/https://github.com/docker/compose/releases/download/1.26.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            curl -L "https://gh-proxy.535888.xyz/https://github.com/docker/compose/releases/download/1.26.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             chmod +x /usr/local/bin/docker-compose
             handle_error $? "Failed to install Docker Compose."
         fi
@@ -227,7 +227,7 @@ enable_bbr() {
       echo "BBR is already enabled. Skipping."
       return
   fi
-    curl -o tcpx.sh "https://ghp.535888.xyz/https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
+    curl -o tcpx.sh "https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh" && chmod +x tcpx.sh && ./tcpx.sh
     handle_error $? "Failed to enable BBR."
 }
 

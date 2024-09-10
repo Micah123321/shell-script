@@ -22,7 +22,7 @@ apt upgrade -y
 apt dist-upgrade -y
 
 # 执行 init_debian11 脚本
-bash <(wget -qO- https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh)
+bash <(wget -qO- https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh)
 
 # 安装内核
 apt install linux-image-cloud-amd64 -y

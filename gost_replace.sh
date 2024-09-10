@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 定义GitHub文件的URL
-GITHUB_URL="https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/rawconf"
+GITHUB_URL="https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/rawconf"
 
 # 定义本地gost配置文件路径
 RAW_CONF_PATH="/etc/gost/rawconf"
