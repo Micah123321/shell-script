@@ -108,11 +108,13 @@ optimize_dns() {
     if [ "$IPV6_AVAILABLE" = true ] && [ "$IPV4_AVAILABLE" = true ]; then
         echo "nameserver 2001:4860:4860::8888" > /etc/resolv.conf
         echo "nameserver 2001:4860:4860::8844" >> /etc/resolv.conf
+        echo "nameserver 9.9.9.9" >> /etc/resolv.conf
+        echo "nameserver 1.1.1.1" >> /etc/resolv.conf
         echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-        echo "nameserver1.1.1.1" >> /etc/resolv.conf
     elif [ "$IPV4_AVAILABLE" = true ]; then
-        echo "nameserver 8.8.8.8" > /etc/resolv.conf
-        echo "nameserver1.1.1.1" >> /etc/resolv.conf
+        echo "nameserver 1.1.1.1 " > /etc/resolv.conf
+        echo "nameserver 9.9.9.9" >> /etc/resolv.conf
+        echo "nameserver 8.8.8.8" >> /etc/resolv.conf
     elif [ "$IPV6_AVAILABLE" = true ]; then
         echo "nameserver 2001:4860:4860::8888" > /etc/resolv.conf
         echo "nameserver 2001:4860:4860::8844" >> /etc/resolv.conf
