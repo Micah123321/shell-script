@@ -384,7 +384,7 @@ remove_bbr_lotserver() {
   if [[ -e /appex/bin/lotServer.sh ]]; then
     bash <(wget -qO- https://raw.githubusercontent.com/fei5seven/lotServer/master/lotServerInstall.sh) uninstall
   fi
-  clear
+#  clear
 }
 
 # 启用BBR+FQ
