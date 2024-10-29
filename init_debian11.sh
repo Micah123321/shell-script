@@ -280,7 +280,7 @@ install_docker() {
     # 检查系统内存是否大于512MB
     total_memory=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
     if [ "$total_memory" -le 524288 ]; then
-        echo "内存不足，无法安装Docker。需要超过512MB的内存。"
+        echo "内存不足，无法安装 Docker。需要超过512MB的内存。"
         return
     fi
 
@@ -293,18 +293,50 @@ install_docker() {
         fi
 
         if [[ $install_docker == "y" || $install_docker == "Y" ]]; then
-            echo "安装 Docker..."
-            wget -qO- https://get.docker.com/ | bash
+            echo "开始安装 Docker..."
+
+            # 更新包列表
+            apt update
+            handle_error $? "更新软件包列表失败。"
+
+            # 安装必要的包
+            apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            handle_error $? "安装必要的包失败。"
+
+            # 添加 Docker 的官方 GPG 密钥
+            curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+            handle_error $? "添加 Docker GPG 密钥失败。"
+
+            # 验证密钥指纹
+            apt-key fingerprint 0EBFCD88
+            handle_error $? "验证 Docker GPG 密钥失败。"
+
+            # 添加 Docker APT 仓库
+            add-apt-repository \
+               "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian \
+               $(lsb_release -cs) \
+               stable"
+            handle_error $? "添加 Docker 仓库失败。"
+
+            # 更新包列表
+            apt update
+            handle_error $? "更新软件包列表失败。"
+
+            # 安装 Docker Engine
+            apt install -y docker-ce docker-ce-cli containerd.io
             handle_error $? "安装 Docker 失败。"
 
+            # 启动并启用 Docker 服务
             systemctl enable docker
             systemctl start docker
             handle_error $? "启动或启用 Docker 服务失败。"
 
             echo "安装 Docker Compose..."
+            # 下载 Docker Compose
             curl -L "https://gh-proxy.535888.xyz/https://github.com/docker/compose/releases/download/1.26.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            handle_error $? "下载 Docker Compose 失败。"
             chmod +x /usr/local/bin/docker-compose
-            handle_error $? "安装 Docker Compose 失败。"
+            handle_error $? "赋予 Docker Compose 可执行权限失败。"
 
             echo "Docker 和 Docker Compose 安装完成。"
         fi
@@ -331,6 +363,7 @@ enable_bbr() {
 
     echo "启用 BBR..."
     curl -o tcpx.sh "https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/ylx2016/Linux-NetSpeed/master/tcpx.sh"
+    handle_error $? "下载 tcpx.sh 失败。"
     chmod +x tcpx.sh
     ./tcpx.sh
     handle_error $? "启用 BBR 失败。"
@@ -485,5 +518,5 @@ main() {
     echo "初始化和优化完成。"
 }
 
-# 执行主函数
-main
+# 执行主函数并记录日志
+main | tee /var/log/setup_script.log
