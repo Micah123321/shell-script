@@ -369,6 +369,34 @@ enable_bbr() {
     handle_error $? "启用 BBR 失败。"
     echo "BBR 已启用。"
 }
+# 移除其他加速模块
+remove_bbr_lotserver() {
+  sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.core.default_qdisc/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.d/99-sysctl.conf
+  sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.conf
+  sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
+  sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
+  sysctl --system
+
+  rm -rf bbrmod
+
+  if [[ -e /appex/bin/lotServer.sh ]]; then
+    bash <(wget -qO- https://raw.githubusercontent.com/fei5seven/lotServer/master/lotServerInstall.sh) uninstall
+  fi
+  clear
+}
+
+# 启用BBR+FQ
+startbbrfq() {
+  remove_bbr_lotserver
+  echo "net.core.default_qdisc=fq" >>/etc/sysctl.d/99-sysctl.conf
+  echo "net.ipv4.tcp_congestion_control=bbr" >>/etc/sysctl.d/99-sysctl.conf
+  sysctl --system
+  echo -e "${Info}BBR+FQ修改成功，重启生效！"
+}
+
+
 
 # 函数：清理Debian系统
 clean_debian() {
@@ -504,7 +532,8 @@ main() {
     update_sources_list
     optimize_dns
     install_base_tools
-    enable_bbr
+#    enable_bbr
+    startbbrfq  # 调用启用 BBR+FQ 加速的函数
     install_xrayr
     install_fail2ban
     install_docker
