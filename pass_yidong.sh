@@ -40,13 +40,20 @@ fi
 
 echo_info "检测到 Debian $DEBIAN_VERSION"
 
+# 检测当前机器是否是谷歌云的，如果 /etc/apt/sources.list.d/google-cloud.list 有文件则删除
+if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
+    echo_info "检测到谷歌云源，删除谷歌云源..."
+    rm -f /etc/apt/sources.list.d/google-cloud.list
+    apt-get autoremove -y
+fi
+
 # 更新系统包列表并升级
 echo_info "更新系统包列表并升级现有包..."
 apt-get update -y && apt-get upgrade -y
 
 # 安装必要的系统依赖
 echo_info "安装必要的系统依赖..."
-sudo apt-get install -y build-essential netfilter-persistent python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git
+apt-get install -y build-essential python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git python3-venv netfilter-persistent
 
 # 定义 geneva.py 的安装路径和虚拟环境路径
 GENEVA_DIR="/opt/geneva"
@@ -64,13 +71,13 @@ python3 -m venv "$VENV_DIR"
 # 激活虚拟环境并安装 Python 包依赖
 echo_info "激活虚拟环境并安装 Python 包依赖 (scapy 和 NetfilterQueue)..."
 source "$VENV_DIR/bin/activate"
-sudo pip3 install --upgrade pip
-sudo pip3 install scapy netfilterqueue
+pip install --upgrade pip
+pip install scapy netfilterqueue
 deactivate
 
 # 保存 geneva.py 脚本
 echo_info "保存 geneva.py 脚本到 $GENEVA_PY..."
-cat <<'EOF' > geneva.py
+cat <<'EOF' > "$GENEVA_PY"
 #!/usr/bin/env python3
 
 import os
@@ -169,11 +176,10 @@ if __name__ == "__main__":
     # 确保在接收到SIGINT信号时能够优雅退出
     signal.signal(signal.SIGINT, lambda signal, frame: sys.exit(0))
     main()
-
 EOF
 
-
 # 赋予 geneva.py 执行权限
+echo_info "赋予 geneva.py 执行权限..."
 chmod +x "$GENEVA_PY"
 
 # 配置 iptables 规则
@@ -188,12 +194,7 @@ iptables -I OUTPUT -p tcp --sport 443 --tcp-flags SYN,RST,ACK,FIN,PSH SYN,ACK -j
 
 # 保存 iptables 规则
 echo_info "保存 iptables 规则..."
-if command -v netfilter-persistent >/dev/null 2>&1; then
-    netfilter-persistent save
-else
-    apt-get install -y iptables-persistent
-    netfilter-persistent save
-fi
+netfilter-persistent save
 
 # 创建 Systemd 服务文件
 SERVICE_FILE_100="/etc/systemd/system/geneva-100.service"
