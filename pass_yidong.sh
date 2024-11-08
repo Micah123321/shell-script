@@ -55,10 +55,8 @@ apt-get update -y && apt-get upgrade -y
 echo_info "安装必要的系统依赖..."
 apt-get install -y build-essential python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git python3-venv netfilter-persistent
 
-
 sudo pip3 install --upgrade pip
 sudo pip3 install scapy netfilterqueue
-
 
 # 保存 geneva.py 脚本
 echo_info "保存 geneva.py 脚本到 root..."
