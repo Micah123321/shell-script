@@ -61,7 +61,7 @@ sudo pip3 install scapy netfilterqueue
 
 
 # 保存 geneva.py 脚本
-echo_info "保存 geneva.py 脚本到 $GENEVA_PY..."
+echo_info "保存 geneva.py 脚本到 root..."
 cat <<'EOF' > geneva.py
 #!/usr/bin/env python3
 
