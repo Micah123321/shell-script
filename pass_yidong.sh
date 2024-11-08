@@ -22,13 +22,30 @@ if [[ "$EUID" -ne 0 ]]; then
 fi
 
 # 检测 Debian 版本
-DEBIAN_VERSION=$(lsb_release -sr | cut -d '.' -f1,2)
+if command -v lsb_release >/dev/null 2>&1; then
+    DEBIAN_VERSION=$(lsb_release -sr | cut -d '.' -f1,2)
+else
+    # 备选方法
+    if [[ -f /etc/os-release ]]; then
+        . /etc/os-release
+        DEBIAN_VERSION=$VERSION_ID
+    else
+        echo_error "无法检测 Debian 版本。请确保系统是 Debian 11 或 Debian 12。"
+    fi
+fi
 
 if [[ "$DEBIAN_VERSION" != "11" && "$DEBIAN_VERSION" != "12" ]]; then
     echo_error "此脚本仅支持 Debian 11 和 Debian 12。当前版本：$DEBIAN_VERSION"
 fi
 
 echo_info "检测到 Debian $DEBIAN_VERSION"
+
+# 检测当前机器时候是谷歌云的 如果/etc/apt/sources.list.d/google-cloud.list有文件则删除
+if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
+    echo_info "检测到谷歌云源，删除谷歌云源..."
+    rm -f /etc/apt/sources.list.d/google-cloud.list
+    sudo apt-get autoremove
+fi
 
 # 更新系统包列表并升级
 echo_info "更新系统包列表并升级现有包..."
@@ -38,10 +55,9 @@ apt-get update -y && apt-get upgrade -y
 echo_info "安装必要的系统依赖..."
 apt-get install -y build-essential python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git
 
-# 安装 Python 包依赖
-echo_info "安装 Python 包依赖..."
-pip3 install --upgrade pip
-pip3 install scapy netfilterqueue
+# 安装 Python 包依赖通过 apt
+echo_info "安装 Python 包依赖 (通过 apt)..."
+apt-get install -y python3-scapy python3-netfilterqueue
 
 # 定义 geneva.py 的安装路径
 GENEVA_DIR="/opt/geneva"
@@ -176,20 +192,37 @@ else
     netfilter-persistent save
 fi
 
-# 创建 Systemd 服务文件
-SERVICE_FILE="/etc/systemd/system/geneva.service"
+# 创建 geneva-100.service
+SERVICE_FILE_100="/etc/systemd/system/geneva-100.service"
 
-echo_info "创建 Systemd 服务文件 $SERVICE_FILE..."
-
-cat <<EOF > "$SERVICE_FILE"
+echo_info "创建 Systemd 服务文件 $SERVICE_FILE_100..."
+cat <<EOF > "$SERVICE_FILE_100"
 [Unit]
-Description=Geneva TCP Window Modifier
+Description=Geneva TCP Window Modifier - Queue 100
 After=network.target
 
 [Service]
 Type=simple
 ExecStart=/usr/bin/python3 /opt/geneva/geneva.py -q 100 -w 17
-ExecStartPost=/usr/bin/python3 /opt/geneva/geneva.py -q 101 -w 4
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 创建 geneva-101.service
+SERVICE_FILE_101="/etc/systemd/system/geneva-101.service"
+
+echo_info "创建 Systemd 服务文件 $SERVICE_FILE_101..."
+cat <<EOF > "$SERVICE_FILE_101"
+[Unit]
+Description=Geneva TCP Window Modifier - Queue 101
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/geneva/geneva.py -q 101 -w 4
 Restart=on-failure
 User=root
 
@@ -201,18 +234,27 @@ EOF
 echo_info "重新加载 Systemd 守护进程..."
 systemctl daemon-reload
 
-# 启动并启用服务
-echo_info "启动 geneva.service 服务..."
-systemctl start geneva.service
-systemctl enable geneva.service
+# 启动并启用 geneva-100.service
+echo_info "启动 geneva-100.service 服务..."
+systemctl start geneva-100.service
+systemctl enable geneva-100.service
+
+# 启动并启用 geneva-101.service
+echo_info "启动 geneva-101.service 服务..."
+systemctl start geneva-101.service
+systemctl enable geneva-101.service
 
 # 检查服务状态
-echo_info "检查 geneva.service 服务状态..."
-systemctl status geneva.service --no-pager
+echo_info "检查 geneva-100.service 服务状态..."
+systemctl status geneva-100.service --no-pager
+
+echo_info "检查 geneva-101.service 服务状态..."
+systemctl status geneva-101.service --no-pager
 
 # 完成
 echo_info "Geneva TCP Window Modifier 安装和配置完成！"
 
 # 提示用户如何查看日志
 echo_info "您可以使用以下命令查看服务日志："
-echo -e "\e[34mjournalctl -u geneva.service -f\e[0m"
+echo -e "\e[34mjournalctl -u geneva-100.service -f\e[0m"
+echo -e "\e[34mjournalctl -u geneva-101.service -f\e[0m"
