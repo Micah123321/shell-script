@@ -46,7 +46,7 @@ apt-get update -y && apt-get upgrade -y
 
 # 安装必要的系统依赖
 echo_info "安装必要的系统依赖..."
-apt-get install -y build-essential python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git python3-venv
+sudo apt-get install -y build-essential netfilter-persistent python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git
 
 # 定义 geneva.py 的安装路径和虚拟环境路径
 GENEVA_DIR="/opt/geneva"
@@ -62,15 +62,15 @@ echo_info "创建 Python 虚拟环境在 $VENV_DIR..."
 python3 -m venv "$VENV_DIR"
 
 # 激活虚拟环境并安装 Python 包依赖
-echo_info "激活虚拟环境并安装 Python 包依赖 (scapy 和 netfilterqueue)..."
+echo_info "激活虚拟环境并安装 Python 包依赖 (scapy 和 NetfilterQueue)..."
 source "$VENV_DIR/bin/activate"
-pip install --upgrade pip
-pip install scapy netfilterqueue
+sudo pip3 install --upgrade pip
+sudo pip3 install scapy netfilterqueue
 deactivate
 
 # 保存 geneva.py 脚本
 echo_info "保存 geneva.py 脚本到 $GENEVA_PY..."
-cat <<'EOF' > "$GENEVA_PY"
+cat <<'EOF' > geneva.py
 #!/usr/bin/env python3
 
 import os
@@ -102,9 +102,8 @@ def modify_window(pkt, window_size, target_flags):
         ip_packet = IP(pkt.get_payload())
         if ip_packet.haslayer(TCP):
             tcp_layer = ip_packet[TCP]
-            flags = tcp_layer.flags
-            # 将flags转换为字符串表示
-            flags_str = flags.sprintf("%TCP.flags%")
+            # 使用 pkt.sprintf 获取 TCP flags 的字符串表示
+            flags_str = ip_packet.sprintf("%TCP.flags%")
             if flags_str in target_flags:
                 logging.debug(f"Modifying window size for packet with flags: {flags_str}")
                 tcp_layer.window = window_size
@@ -170,7 +169,9 @@ if __name__ == "__main__":
     # 确保在接收到SIGINT信号时能够优雅退出
     signal.signal(signal.SIGINT, lambda signal, frame: sys.exit(0))
     main()
+
 EOF
+
 
 # 赋予 geneva.py 执行权限
 chmod +x "$GENEVA_PY"
@@ -199,14 +200,14 @@ SERVICE_FILE_100="/etc/systemd/system/geneva-100.service"
 SERVICE_FILE_101="/etc/systemd/system/geneva-101.service"
 
 echo_info "创建 Systemd 服务文件 $SERVICE_FILE_100..."
-cat <<EOF > "$SERVICE_FILE_100"
+cat <<'EOF' > "$SERVICE_FILE_100"
 [Unit]
 Description=Geneva TCP Window Modifier - Queue 100
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=$VENV_DIR/bin/python3 $GENEVA_PY -q 100 -w 17
+ExecStart=/opt/geneva/venv/bin/python3 /opt/geneva/geneva.py -q 100 -w 17
 Restart=on-failure
 User=root
 
@@ -215,14 +216,14 @@ WantedBy=multi-user.target
 EOF
 
 echo_info "创建 Systemd 服务文件 $SERVICE_FILE_101..."
-cat <<EOF > "$SERVICE_FILE_101"
+cat <<'EOF' > "$SERVICE_FILE_101"
 [Unit]
 Description=Geneva TCP Window Modifier - Queue 101
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=$VENV_DIR/bin/python3 $GENEVA_PY -q 101 -w 4
+ExecStart=/opt/geneva/venv/bin/python3 /opt/geneva/geneva.py -q 101 -w 4
 Restart=on-failure
 User=root
 
