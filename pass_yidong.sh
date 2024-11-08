@@ -40,31 +40,33 @@ fi
 
 echo_info "检测到 Debian $DEBIAN_VERSION"
 
-# 检测当前机器时候是谷歌云的 如果/etc/apt/sources.list.d/google-cloud.list有文件则删除
-if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
-    echo_info "检测到谷歌云源，删除谷歌云源..."
-    rm -f /etc/apt/sources.list.d/google-cloud.list
-    sudo apt-get autoremove
-fi
-
 # 更新系统包列表并升级
 echo_info "更新系统包列表并升级现有包..."
 apt-get update -y && apt-get upgrade -y
 
 # 安装必要的系统依赖
 echo_info "安装必要的系统依赖..."
-apt-get install -y build-essential python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git
+apt-get install -y build-essential python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git python3-venv
 
-# 安装 Python 包依赖通过 apt
-echo_info "安装 Python 包依赖 (通过 apt)..."
-apt-get install -y python3-scapy python3-netfilterqueue
-
-# 定义 geneva.py 的安装路径
+# 定义 geneva.py 的安装路径和虚拟环境路径
 GENEVA_DIR="/opt/geneva"
 GENEVA_PY="$GENEVA_DIR/geneva.py"
+VENV_DIR="$GENEVA_DIR/venv"
 
 # 创建安装目录
+echo_info "创建安装目录 $GENEVA_DIR..."
 mkdir -p "$GENEVA_DIR"
+
+# 创建 Python 虚拟环境
+echo_info "创建 Python 虚拟环境在 $VENV_DIR..."
+python3 -m venv "$VENV_DIR"
+
+# 激活虚拟环境并安装 Python 包依赖
+echo_info "激活虚拟环境并安装 Python 包依赖 (scapy 和 netfilterqueue)..."
+source "$VENV_DIR/bin/activate"
+pip install --upgrade pip
+pip install scapy netfilterqueue
+deactivate
 
 # 保存 geneva.py 脚本
 echo_info "保存 geneva.py 脚本到 $GENEVA_PY..."
@@ -192,8 +194,9 @@ else
     netfilter-persistent save
 fi
 
-# 创建 geneva-100.service
+# 创建 Systemd 服务文件
 SERVICE_FILE_100="/etc/systemd/system/geneva-100.service"
+SERVICE_FILE_101="/etc/systemd/system/geneva-101.service"
 
 echo_info "创建 Systemd 服务文件 $SERVICE_FILE_100..."
 cat <<EOF > "$SERVICE_FILE_100"
@@ -203,16 +206,13 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /opt/geneva/geneva.py -q 100 -w 17
+ExecStart=$VENV_DIR/bin/python3 $GENEVA_PY -q 100 -w 17
 Restart=on-failure
 User=root
 
 [Install]
 WantedBy=multi-user.target
 EOF
-
-# 创建 geneva-101.service
-SERVICE_FILE_101="/etc/systemd/system/geneva-101.service"
 
 echo_info "创建 Systemd 服务文件 $SERVICE_FILE_101..."
 cat <<EOF > "$SERVICE_FILE_101"
@@ -222,7 +222,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /opt/geneva/geneva.py -q 101 -w 4
+ExecStart=$VENV_DIR/bin/python3 $GENEVA_PY -q 101 -w 4
 Restart=on-failure
 User=root
 
