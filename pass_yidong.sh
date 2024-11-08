@@ -55,29 +55,14 @@ apt-get update -y && apt-get upgrade -y
 echo_info "安装必要的系统依赖..."
 apt-get install -y build-essential python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git python3-venv netfilter-persistent
 
-# 定义 geneva.py 的安装路径和虚拟环境路径
-GENEVA_DIR="/opt/geneva"
-GENEVA_PY="$GENEVA_DIR/geneva.py"
-VENV_DIR="$GENEVA_DIR/venv"
 
-# 创建安装目录
-echo_info "创建安装目录 $GENEVA_DIR..."
-mkdir -p "$GENEVA_DIR"
+sudo pip3 install --upgrade pip
+sudo pip3 install scapy netfilterqueue
 
-# 创建 Python 虚拟环境
-echo_info "创建 Python 虚拟环境在 $VENV_DIR..."
-python3 -m venv "$VENV_DIR"
-
-# 激活虚拟环境并安装 Python 包依赖
-echo_info "激活虚拟环境并安装 Python 包依赖 (scapy 和 NetfilterQueue)..."
-source "$VENV_DIR/bin/activate"
-pip install --upgrade pip
-pip install scapy netfilterqueue
-deactivate
 
 # 保存 geneva.py 脚本
 echo_info "保存 geneva.py 脚本到 $GENEVA_PY..."
-cat <<'EOF' > "$GENEVA_PY"
+cat <<'EOF' > geneva.py
 #!/usr/bin/env python3
 
 import os
@@ -118,7 +103,7 @@ def modify_window(pkt, window_size, target_flags):
                 del ip_packet.chksum
                 del tcp_layer.chksum
                 pkt.set_payload(bytes(ip_packet))
-                logging.info(f"Set window size to {window_size} for flags {flags_str}")
+                # logging.info(f"Set window size to {window_size} for flags {flags_str}")
     except Exception as e:
         logging.error(f"Error modifying packet: {e}")
     finally:
@@ -180,7 +165,7 @@ EOF
 
 # 赋予 geneva.py 执行权限
 echo_info "赋予 geneva.py 执行权限..."
-chmod +x "$GENEVA_PY"
+chmod +x geneva.py
 
 # 配置 iptables 规则
 echo_info "配置 iptables 规则..."
@@ -208,7 +193,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/opt/geneva/venv/bin/python3 /opt/geneva/geneva.py -q 100 -w 17
+ExecStart=/root/geneva.py -q 100 -w 17
 Restart=on-failure
 User=root
 
@@ -224,7 +209,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/opt/geneva/venv/bin/python3 /opt/geneva/geneva.py -q 101 -w 4
+ExecStart=/root/geneva.py -q 101 -w 4
 Restart=on-failure
 User=root
 
