@@ -55,7 +55,7 @@ apt-get update -y && apt-get upgrade -y
 # 检查是否已安装 python3
 if command -v python3 >/dev/null 2>&1; then
     echo_info "检测到 python3 已安装，跳过安装 python3 及相关包。"
-    PACKAGES="build-essential libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent"
+    PACKAGES="build-essential libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent python3-venv"
 else
     echo_info "未检测到 python3，安装 python3 及相关包。"
     PACKAGES="build-essential python3 python3-dev python3-pip python3-venv libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent"
@@ -65,14 +65,27 @@ fi
 echo_info "安装必要的系统依赖..."
 apt-get install -y $PACKAGES
 
-# 更新 pip 并安装 Python 包（移除 sudo，因为脚本已以 root 身份运行）
-echo_info "更新 pip 并安装必要的 Python 包..."
-pip3 install --upgrade pip
-pip3 install scapy netfilterqueue
+# 创建虚拟环境
+VENV_DIR="/opt/geneva_venv"
+if [ -d "$VENV_DIR" ]; then
+    echo_info "虚拟环境已存在，跳过创建虚拟环境。"
+else
+    echo_info "创建 Python 虚拟环境..."
+    python3 -m venv "$VENV_DIR"
+fi
+
+# 激活虚拟环境并安装 Python 包
+echo_info "激活虚拟环境并安装必要的 Python 包..."
+# shellcheck disable=SC1090
+source "$VENV_DIR/bin/activate"
+pip install --upgrade pip
+pip install scapy netfilterqueue
+deactivate
 
 # 保存 geneva.py 脚本
-echo_info "保存 geneva.py 脚本到 /root..."
-cat << 'EOF' > /root/geneva.py
+echo_info "保存 geneva.py 脚本到 /opt/geneva/..."
+mkdir -p /opt/geneva
+cat << 'EOF' > /opt/geneva/geneva.py
 #!/usr/bin/env python3
 
 import os
@@ -175,7 +188,7 @@ EOF
 
 # 赋予 geneva.py 执行权限
 echo_info "赋予 geneva.py 执行权限..."
-chmod +x /root/geneva.py
+chmod +x /opt/geneva/geneva.py
 
 # 配置 iptables 规则
 echo_info "配置 iptables 规则..."
@@ -192,18 +205,19 @@ echo_info "保存 iptables 规则..."
 netfilter-persistent save
 
 # 创建 Systemd 服务文件
-SERVICE_FILE_100="/etc/systemd/system/geneva-100.service"
-SERVICE_FILE_101="/etc/systemd/system/geneva-101.service"
+SERVICE_DIR="/etc/systemd/system"
+SERVICE_FILE_100="$SERVICE_DIR/geneva-100.service"
+SERVICE_FILE_101="$SERVICE_DIR/geneva-101.service"
 
 echo_info "创建 Systemd 服务文件 $SERVICE_FILE_100..."
-cat <<'EOF' > "$SERVICE_FILE_100"
+cat <<EOF > "$SERVICE_FILE_100"
 [Unit]
 Description=Geneva TCP Window Modifier - Queue 100
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /root/geneva.py -q 100 -w 17
+ExecStart=$VENV_DIR/bin/python /opt/geneva/geneva.py -q 100 -w 17
 Restart=on-failure
 User=root
 
@@ -212,14 +226,14 @@ WantedBy=multi-user.target
 EOF
 
 echo_info "创建 Systemd 服务文件 $SERVICE_FILE_101..."
-cat <<'EOF' > "$SERVICE_FILE_101"
+cat <<EOF > "$SERVICE_FILE_101"
 [Unit]
 Description=Geneva TCP Window Modifier - Queue 101
 After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /root/geneva.py -q 101 -w 4
+ExecStart=$VENV_DIR/bin/python /opt/geneva/geneva.py -q 101 -w 4
 Restart=on-failure
 User=root
 
