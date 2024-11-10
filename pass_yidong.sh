@@ -34,6 +34,7 @@ else
     fi
 fi
 
+# 仅支持 Debian 11 和 Debian 12
 if [[ "$DEBIAN_VERSION" != "11" && "$DEBIAN_VERSION" != "12" ]]; then
     echo_error "此脚本仅支持 Debian 11 和 Debian 12。当前版本：$DEBIAN_VERSION"
 fi
@@ -51,16 +52,27 @@ fi
 echo_info "更新系统包列表并升级现有包..."
 apt-get update -y && apt-get upgrade -y
 
+# 检查是否已安装 python3
+if command -v python3 >/dev/null 2>&1; then
+    echo_info "检测到 python3 已安装，跳过安装 python3 及相关包。"
+    PACKAGES="build-essential libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent"
+else
+    echo_info "未检测到 python3，安装 python3 及相关包。"
+    PACKAGES="build-essential python3 python3-dev python3-pip python3-venv libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent"
+fi
+
 # 安装必要的系统依赖
 echo_info "安装必要的系统依赖..."
-apt-get install -y build-essential python3 python3-dev python3-pip libnetfilter-queue-dev libffi-dev libssl-dev iptables git python3-venv netfilter-persistent
+apt-get install -y $PACKAGES
 
-sudo pip3 install --upgrade pip
-sudo pip3 install scapy netfilterqueue
+# 更新 pip 并安装 Python 包（移除 sudo，因为脚本已以 root 身份运行）
+echo_info "更新 pip 并安装必要的 Python 包..."
+pip3 install --upgrade pip
+pip3 install scapy netfilterqueue
 
 # 保存 geneva.py 脚本
-echo_info "保存 geneva.py 脚本到 root..."
-cat << 'EOF' > geneva.py
+echo_info "保存 geneva.py 脚本到 /root..."
+cat << 'EOF' > /root/geneva.py
 #!/usr/bin/env python3
 
 import os
@@ -163,7 +175,7 @@ EOF
 
 # 赋予 geneva.py 执行权限
 echo_info "赋予 geneva.py 执行权限..."
-chmod +x geneva.py
+chmod +x /root/geneva.py
 
 # 配置 iptables 规则
 echo_info "配置 iptables 规则..."
@@ -191,7 +203,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=python3 /root/geneva.py -q 100 -w 17
+ExecStart=/usr/bin/python3 /root/geneva.py -q 100 -w 17
 Restart=on-failure
 User=root
 
@@ -207,7 +219,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=python3 /root/geneva.py -q 101 -w 4
+ExecStart=/usr/bin/python3 /root/geneva.py -q 101 -w 4
 Restart=on-failure
 User=root
 
