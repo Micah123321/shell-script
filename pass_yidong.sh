@@ -191,7 +191,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=python /root/geneva.py -q 100 -w 17
+ExecStart=python3 /root/geneva.py -q 100 -w 17
 Restart=on-failure
 User=root
 
@@ -207,7 +207,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=python /root/geneva.py -q 101 -w 4
+ExecStart=python3 /root/geneva.py -q 101 -w 4
 Restart=on-failure
 User=root
 
