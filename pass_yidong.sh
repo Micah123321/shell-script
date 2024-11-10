@@ -60,7 +60,7 @@ sudo pip3 install scapy netfilterqueue
 
 # 保存 geneva.py 脚本
 echo_info "保存 geneva.py 脚本到 root..."
-cat <<'EOF' > geneva.py
+cat << 'EOF' > geneva.py
 #!/usr/bin/env python3
 
 import os
@@ -191,7 +191,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/root/geneva.py -q 100 -w 17
+ExecStart=python /root/geneva.py -q 100 -w 17
 Restart=on-failure
 User=root
 
@@ -207,7 +207,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/root/geneva.py -q 101 -w 4
+ExecStart=python /root/geneva.py -q 101 -w 4
 Restart=on-failure
 User=root
 

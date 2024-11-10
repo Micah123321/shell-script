@@ -5,6 +5,8 @@ export DEBIAN_FRONTEND=noninteractive
 
 # 全局变量
 INTERACTIVE_MODE=true
+DEBIAN_VERSION=""
+DEBIAN_CODENAME=""
 
 # 检查是否传入非交互模式参数
 if [ "$1" == "--non-interactive" ]; then
@@ -28,23 +30,47 @@ check_root() {
     fi
 }
 
-# 函数：检测系统类型
+# 函数：检测系统类型和版本
 detect_os() {
-    if [ -f /etc/debian_version ] || grep -qi ubuntu /etc/os-release; then
-        OS="Debian"
+    if [ -f /etc/debian_version ]; then
+        DEBIAN_VERSION=$(lsb_release -sr)
+        DEBIAN_CODENAME=$(lsb_release -sc)
+        if [[ "$DEBIAN_VERSION" == "11"* ]]; then
+            OS="Debian11"
+        elif [[ "$DEBIAN_VERSION" == "12"* ]]; then
+            OS="Debian12"
+        else
+            echo "不支持的 Debian 版本: $DEBIAN_VERSION。仅支持 Debian 11 和 12。"
+            exit 1
+        fi
+        echo "检测到的操作系统: $OS (Debian $DEBIAN_VERSION, 代号: $DEBIAN_CODENAME)"
+    elif grep -qi ubuntu /etc/os-release; then
+        OS="Ubuntu"
+        echo "检测到的操作系统: $OS"
     elif [ -f /etc/redhat-release ]; then
         OS="CentOS"
+        echo "检测到的操作系统: $OS"
     else
         echo "不支持的操作系统。"
         exit 1
     fi
-    echo "检测到的操作系统: $OS"
 }
 
 # 函数：更新源列表
 update_sources_list() {
-    if grep -q "deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free" /etc/apt/sources.list; then
-        echo "源列表已更新。跳过更新。"
+    # 根据 Debian 版本设置代号
+    if [[ "$OS" == "Debian11" ]]; then
+        CODENAME="bullseye"
+    elif [[ "$OS" == "Debian12" ]]; then
+        CODENAME="bookworm"
+    else
+        echo "不支持的 Debian 版本: $OS"
+        exit 1
+    fi
+
+    # 检查是否已包含 bullseye 或 bookworm backports
+    if grep -q "deb-src http://deb.debian.org/debian $CODENAME-backports main contrib non-free" /etc/apt/sources.list; then
+        echo "源列表已包含 $CODENAME-backports。跳过更新。"
         return
     fi
 
@@ -65,20 +91,20 @@ update_sources_list() {
     echo "备份文件: /etc/apt/sources.list.bak"
 
     cat > /etc/apt/sources.list << EOF
-deb http://deb.debian.org/debian/ bullseye main
-deb-src http://deb.debian.org/debian/ bullseye main
+deb http://deb.debian.org/debian/ $CODENAME main
+deb-src http://deb.debian.org/debian/ $CODENAME main
 
-deb http://security.debian.org/debian-security bullseye-security main
-deb-src http://security.debian.org/debian-security bullseye-security main
+deb http://security.debian.org/debian-security $CODENAME-security main
+deb-src http://security.debian.org/debian-security $CODENAME-security main
 
-deb http://deb.debian.org/debian/ bullseye-updates main
-deb-src http://deb.debian.org/debian/ bullseye-updates main
+deb http://deb.debian.org/debian/ $CODENAME-updates main
+deb-src http://deb.debian.org/debian/ $CODENAME-updates main
 
-deb http://deb.debian.org/debian bullseye-backports main contrib non-free
-deb-src http://deb.debian.org/debian bullseye-backports main contrib non-free
+deb http://deb.debian.org/debian $CODENAME-backports main contrib non-free
+deb-src http://deb.debian.org/debian $CODENAME-backports main contrib non-free
 EOF
     handle_error $? "更新源列表失败。"
-    echo "源列表已更新。"
+    echo "源列表已更新为 $CODENAME。"
 }
 
 # 函数：优化DNS服务器
@@ -143,7 +169,7 @@ EOF
 
 # 函数：安装基础工具
 install_base_tools() {
-    if [[ "$(lsb_release -is)" == "Ubuntu" ]]; then
+    if [[ "$OS" == "Ubuntu" ]]; then
         KEYS=("112695A0E562B32A" "54404762BBB6E853" "0E98404D386FA1D9" "6ED0E7B82643E131" "605C66F00D6C9793")
 
         for KEY in "${KEYS[@]}"; do
@@ -203,7 +229,7 @@ install_fail2ban() {
         if [[ $install_f2b == "y" || $install_f2b == "Y" ]]; then
             echo "安装 Fail2Ban..."
 
-            if [ "$OS" = "Debian" ]; then
+            if [[ "$OS" == "Debian11" || "$OS" == "Debian12" ]]; then
                 apt update
                 handle_error $? "更新软件包列表失败。"
                 apt install -y fail2ban
@@ -217,6 +243,10 @@ install_fail2ban() {
                     cp /etc/fail2ban/jail.local /etc/fail2ban/jail.local.bak
                     echo "备份原有的 jail.local 为 jail.local.bak"
                 fi
+
+                # 获取SSH端口
+                SSH_PORT=$(grep "^Port " /etc/ssh/sshd_config | awk '{print $2}')
+                SSH_PORT=${SSH_PORT:-22}
 
                 cat > /etc/fail2ban/jail.local << EOF
 [DEFAULT]
@@ -247,6 +277,10 @@ EOF
                     cp /etc/fail2ban/jail.local /etc/fail2ban/jail.local.bak
                     echo "备份原有的 jail.local 为 jail.local.bak"
                 fi
+
+                # 获取SSH端口
+                SSH_PORT=$(grep "^Port " /etc/ssh/sshd_config | awk '{print $2}')
+                SSH_PORT=${SSH_PORT:-22}
 
                 cat > /etc/fail2ban/jail.local << EOF
 [DEFAULT]
@@ -314,7 +348,7 @@ install_docker() {
             # 添加 Docker APT 仓库
             add-apt-repository \
                "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian \
-               $(lsb_release -cs) \
+               $DEBIAN_CODENAME \
                stable"
             handle_error $? "添加 Docker 仓库失败。"
 
@@ -369,34 +403,32 @@ enable_bbr() {
     handle_error $? "启用 BBR 失败。"
     echo "BBR 已启用。"
 }
+
 # 移除其他加速模块
 remove_bbr_lotserver() {
-  sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.d/99-sysctl.conf
-  sed -i '/net.core.default_qdisc/d' /etc/sysctl.d/99-sysctl.conf
-  sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.d/99-sysctl.conf
-  sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.conf
-  sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
-  sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
-  sysctl --system
+    sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.d/99-sysctl.conf
+    sed -i '/net.core.default_qdisc/d' /etc/sysctl.d/99-sysctl.conf
+    sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.d/99-sysctl.conf
+    sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.conf
+    sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
+    sysctl --system
 
-  rm -rf bbrmod
+    rm -rf tcpx.sh bbrmod
 
-  if [[ -e /appex/bin/lotServer.sh ]]; then
-    bash <(wget -qO- https://raw.githubusercontent.com/fei5seven/lotServer/master/lotServerInstall.sh) uninstall
-  fi
-#  clear
+    if [[ -e /appex/bin/lotServer.sh ]]; then
+        bash <(wget -qO- https://raw.githubusercontent.com/fei5seven/lotServer/master/lotServerInstall.sh) uninstall
+    fi
 }
 
 # 启用BBR+FQ
 startbbrfq() {
-  remove_bbr_lotserver
-  echo "net.core.default_qdisc=fq" >>/etc/sysctl.d/99-sysctl.conf
-  echo "net.ipv4.tcp_congestion_control=bbr" >>/etc/sysctl.d/99-sysctl.conf
-  sysctl --system
-  echo -e "${Info}BBR+FQ修改成功，重启生效！"
+    remove_bbr_lotserver
+    echo "net.core.default_qdisc=fq" >>/etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.tcp_congestion_control=bbr" >>/etc/sysctl.d/99-sysctl.conf
+    sysctl --system
+    echo "BBR+FQ修改成功，重启生效！"
 }
-
-
 
 # 函数：清理Debian系统
 clean_debian() {
@@ -458,8 +490,8 @@ display_system_info() {
     kernel_version=$(uname -r)
     cpu_arch=$(uname -m)
     cpu_cores=$(nproc)
-    mem_info=$(free -m | awk 'NR==2{printf "%.2f/%.2f MB (%.2f%%)", $3/1024, $2/1024, $3*100/$2}')
-    swap_info=$(free -m | awk 'NR==3{printf "%.2f/%.2f MB (%.2f%%)", $3/1024, $2/1024, $3*100/$2}')
+    mem_info=$(free -m | awk 'NR==2{printf "%.2f/%.2f GB (%.2f%%)", $3/1024, $2/1024, $3*100/$2}')
+    swap_info=$(free -m | awk 'NR==3{printf "%.2f/%.2f GB (%.2f%%)", $3/1024, $2/1024, $3*100/$2}')
     disk_info=$(df -h | awk '$NF=="/"{printf "%s/%s (%s)", $3, $2, $5}')
     congestion_algorithm=$(sysctl -n net.ipv4.tcp_congestion_control)
     queue_algorithm=$(sysctl -n net.core.default_qdisc)
@@ -532,7 +564,7 @@ main() {
     update_sources_list
     optimize_dns
     install_base_tools
-#    enable_bbr
+    # enable_bbr
     startbbrfq  # 调用启用 BBR+FQ 加速的函数
     install_xrayr
     install_fail2ban

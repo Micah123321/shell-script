@@ -122,3 +122,13 @@ bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/M
 ```
 
 
+## 移动墙脚本
+
+> 移动墙脚本
+
+```shell
+wget https://raw.githubusercontent.com/Micah123321/shell-script/main/pass_yidong.sh
+chmod +x pass_yidong.sh && ./pass_yidong.sh
+```
+
+
