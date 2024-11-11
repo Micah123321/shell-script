@@ -64,6 +64,7 @@ fi
 # 安装必要的系统依赖
 echo_info "安装必要的系统依赖..."
 apt-get install -y $PACKAGES
+sudo apt-get install -y python3-dev
 
 # 创建虚拟环境
 VENV_DIR="/opt/geneva_venv"
