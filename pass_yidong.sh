@@ -54,8 +54,8 @@ apt-get update -y && apt-get upgrade -y
 
 # 检查是否已安装 python3
 if command -v python3 >/dev/null 2>&1; then
-    echo_info "检测到 python3 已安装，跳过安装 python3 及相关包。"
-    PACKAGES="build-essential libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent python3-venv"
+    echo_info "检测到 python3 已安装，安装 python3-dev 及其他相关包。"
+    PACKAGES="build-essential libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent python3-venv python3-dev"
 else
     echo_info "未检测到 python3，安装 python3 及相关包。"
     PACKAGES="build-essential python3 python3-dev python3-pip python3-venv libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent"
