@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 一键安装 Geneva TCP Window Modifier 脚本
-# 兼容 Debian 11 和 Debian 12
+# 兼容 Debian 11、Debian 12 和 CentOS 7
 
 set -e
 
@@ -21,50 +21,84 @@ if [[ "$EUID" -ne 0 ]]; then
     echo_error "请以 root 用户运行此脚本。使用 sudo ./install_geneva.sh"
 fi
 
-# 检测 Debian 版本
-if command -v lsb_release >/dev/null 2>&1; then
-    DEBIAN_VERSION=$(lsb_release -sr | cut -d '.' -f1,2)
+# 检测操作系统和版本
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+    VERSION_ID_NUM=$(echo "$VERSION_ID" | cut -d '.' -f1)
 else
-    # 备选方法
-    if [[ -f /etc/os-release ]]; then
-        . /etc/os-release
-        DEBIAN_VERSION=$VERSION_ID
-    else
-        echo_error "无法检测 Debian 版本。请确保系统是 Debian 11 或 Debian 12。"
+    echo_error "无法检测操作系统。请确保是 Debian 或 CentOS 系统。"
+fi
+
+# 根据操作系统设置变量
+if [[ "$OS" == "debian" ]]; then
+    PACKAGE_MANAGER="apt"
+    UPDATE_CMD="apt-get update -y"
+    UPGRADE_CMD="apt-get upgrade -y"
+    INSTALL_CMD="apt-get install -y"
+    DEBIAN_VERSION=$VERSION_ID_NUM
+    # 仅支持 Debian 11 和 Debian 12
+    if [[ "$DEBIAN_VERSION" != "11" && "$DEBIAN_VERSION" != "12" ]]; then
+        echo_error "此脚本仅支持 Debian 11 和 Debian 12。当前版本：$DEBIAN_VERSION"
+    fi
+    echo_info "检测到 Debian $DEBIAN_VERSION"
+
+elif [[ "$OS" == "centos" ]]; then
+    PACKAGE_MANAGER="yum"
+    UPDATE_CMD="yum update -y"
+    UPGRADE_CMD="yum update -y"
+    INSTALL_CMD="yum install -y"
+    CENTOS_VERSION=$VERSION_ID_NUM
+    # 仅支持 CentOS 7
+    if [[ "$CENTOS_VERSION" != "7" ]]; then
+        echo_error "此脚本仅支持 CentOS 7。当前版本：$CENTOS_VERSION"
+    fi
+    echo_info "检测到 CentOS $CENTOS_VERSION"
+else
+    echo_error "不支持的操作系统：$OS。仅支持 Debian 11、Debian 12 和 CentOS 7。"
+fi
+
+# 针对 CentOS 安装 EPEL 仓库
+if [[ "$OS" == "centos" ]]; then
+    if ! yum repolist | grep -q "^epel/"; then
+        echo_info "安装 EPEL 仓库..."
+        yum install -y epel-release
     fi
 fi
 
-# 仅支持 Debian 11 和 Debian 12
-if [[ "$DEBIAN_VERSION" != "11" && "$DEBIAN_VERSION" != "12" ]]; then
-    echo_error "此脚本仅支持 Debian 11 和 Debian 12。当前版本：$DEBIAN_VERSION"
-fi
-
-echo_info "检测到 Debian $DEBIAN_VERSION"
-
-# 检测当前机器是否是谷歌云的，如果 /etc/apt/sources.list.d/google-cloud.list 有文件则删除
-if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
-    echo_info "检测到谷歌云源，删除谷歌云源..."
-    rm -f /etc/apt/sources.list.d/google-cloud.list
-    apt-get autoremove -y
+# 针对 Debian，检测是否为谷歌云并删除源
+if [[ "$OS" == "debian" ]]; then
+    if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
+        echo_info "检测到谷歌云源，删除谷歌云源..."
+        rm -f /etc/apt/sources.list.d/google-cloud.list
+        $PACKAGE_MANAGER autoremove -y
+    fi
 fi
 
 # 更新系统包列表并升级
 echo_info "更新系统包列表并升级现有包..."
-apt-get update -y && apt-get upgrade -y
+$UPDATE_CMD && $UPGRADE_CMD
 
-# 检查是否已安装 python3
-if command -v python3 >/dev/null 2>&1; then
-    echo_info "检测到 python3 已安装，安装 python3-dev 及其他相关包。"
-    PACKAGES="build-essential libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent python3-venv python3-dev"
-else
-    echo_info "未检测到 python3，安装 python3 及相关包。"
-    PACKAGES="build-essential python3 python3-dev python3-pip python3-venv libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent"
+# 根据操作系统设置安装包列表
+if [[ "$OS" == "debian" ]]; then
+    # 检查是否已安装 python3
+    if command -v python3 >/dev/null 2>&1; then
+        echo_info "检测到 python3 已安装，安装 python3-dev 及其他相关包。"
+        PACKAGES="build-essential libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent python3-venv python3-dev"
+    else
+        echo_info "未检测到 python3，安装 python3 及相关包。"
+        PACKAGES="build-essential python3 python3-dev python3-pip python3-venv libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent"
+    fi
+elif [[ "$OS" == "centos" ]]; then
+    # CentOS 7 使用不同的软件包名称
+    echo_info "检测 CentOS 7 环境，安装必要的依赖包。"
+    PACKAGES="gcc gcc-c++ make libnetfilter_queue-devel libffi-devel openssl-devel iptables git python3 python3-devel python3-pip python3-virtualenv iptables-services"
 fi
 
 # 安装必要的系统依赖
 echo_info "安装必要的系统依赖..."
-apt-get install -y $PACKAGES
-sudo apt-get install -y python3-dev
+$INSTALL_CMD $PACKAGES
+$INSTALL_CMD python3-devel
 
 # 创建虚拟环境
 VENV_DIR="/opt/geneva_venv"
@@ -203,7 +237,13 @@ iptables -I OUTPUT -p tcp --sport 443 --tcp-flags SYN,RST,ACK,FIN,PSH SYN,ACK -j
 
 # 保存 iptables 规则
 echo_info "保存 iptables 规则..."
-netfilter-persistent save
+if [[ "$OS" == "debian" ]]; then
+    netfilter-persistent save
+elif [[ "$OS" == "centos" ]]; then
+    service iptables save
+    systemctl enable iptables
+    systemctl restart iptables
+fi
 
 # 创建 Systemd 服务文件
 SERVICE_DIR="/etc/systemd/system"
