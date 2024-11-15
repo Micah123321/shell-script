@@ -1,3 +1,5 @@
+import random
+
 def generate_gcp_commands(project_name, region, password, network_tier):
     regions = {
         "香港": {
@@ -26,9 +28,13 @@ def generate_gcp_commands(project_name, region, password, network_tier):
 
     region_info = regions[region]
 
+    # Generate a random number for the template name suffix
+    random_number = random.randint(100000, 999999)
+    template_name_with_suffix = f"{region_info['template_name']}-{random_number}"
+
     # Create instance template command with network tier option
     template_command = f'''
-gcloud compute instance-templates create {region_info["template_name"]} \\
+gcloud compute instance-templates create {template_name_with_suffix} \\
     --machine-type=e2-micro \\
     --network-interface=network=default,network-tier={network_tier} \\
     --subnet=default \\
@@ -47,7 +53,7 @@ gcloud compute instance-templates create {region_info["template_name"]} \\
     for instance_name in region_info["instance_names"]:
         instance_commands += f'''
 gcloud compute instances create {instance_name} \\
-    --source-instance-template={region_info["template_name"]} \\
+    --source-instance-template={template_name_with_suffix} \\
     --zone={region_info["zone"]} \\
     --project={project_name} \\
     --metadata=startup-script='sudo apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p {password} && bash <(curl -sL https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) --non-interactive'
