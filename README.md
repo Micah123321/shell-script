@@ -138,5 +138,12 @@ chmod +x pass_yidong.sh && ./pass_yidong.sh
 ```shell
 apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p password
 ```
+## 测试延迟脚本
 
+> 测试延迟脚本
+
+```shell
+wget https://raw.githubusercontent.com/Micah123321/shell-script/main/test_delay.sh
+chmod +x test_delay.sh && ./test_delay.sh
+```
 

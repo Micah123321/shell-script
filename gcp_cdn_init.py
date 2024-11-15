@@ -1,5 +1,6 @@
 import random
 
+
 def generate_gcp_commands(project_name, region, password, network_tier):
     regions = {
         "香港": {
@@ -36,8 +37,7 @@ def generate_gcp_commands(project_name, region, password, network_tier):
     template_command = f'''
 gcloud compute instance-templates create {template_name_with_suffix} \\
     --machine-type=e2-micro \\
-    --network-interface=network=default,network-tier={network_tier} \\
-    --subnet=default \\
+    --network-interface=network=default,network-tier={network_tier},subnet=default \\
     --tags=http-server,https-server \\
     --image-family=debian-11 \\
     --image-project=debian-cloud \\
@@ -48,11 +48,15 @@ gcloud compute instance-templates create {template_name_with_suffix} \\
 # 输入n,选{region_info["subnet_choice"]}
 '''
 
-    # Create virtual machine instance commands
+    # Create virtual machine instance commands with random suffix for each instance name
     instance_commands = ""
     for instance_name in region_info["instance_names"]:
+        # Add random suffix to instance name
+        random_instance_number = random.randint(1000, 9999)
+        instance_name_with_suffix = f"{instance_name}-{random_instance_number}"
+
         instance_commands += f'''
-gcloud compute instances create {instance_name} \\
+gcloud compute instances create {instance_name_with_suffix} \\
     --source-instance-template={template_name_with_suffix} \\
     --zone={region_info["zone"]} \\
     --project={project_name} \\
@@ -63,7 +67,7 @@ gcloud compute instances create {instance_name} \\
 
 
 # Get project name, region, password, and network tier
-project_name = input("请输入项目名称：")
+project_name = input("请输入项目名称：")  # famous-cursor-441805-n8
 region = input("请输入区域（香港/台湾/东京）：")
 password = input("请输入自定义密码：")
 network_tier = input("请选择网络类型（普通/高级）：").strip()
