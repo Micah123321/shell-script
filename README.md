@@ -131,4 +131,12 @@ wget https://raw.githubusercontent.com/Micah123321/shell-script/main/pass_yidong
 chmod +x pass_yidong.sh && ./pass_yidong.sh
 ```
 
+## 指定修改密码脚本
+
+> 指定修改密码脚本
+
+```shell
+apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p password
+```
+
 
