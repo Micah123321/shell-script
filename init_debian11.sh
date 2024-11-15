@@ -58,6 +58,11 @@ detect_os() {
 
 # 函数：更新源列表
 update_sources_list() {
+    if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
+        echo_info "检测到谷歌云源，删除谷歌云源..."
+        rm -f /etc/apt/sources.list.d/google-cloud.list
+        $PACKAGE_MANAGER autoremove -y
+    fi
     # 根据 Debian 版本设置代号
     if [[ "$OS" == "Debian11" ]]; then
         CODENAME="bullseye"
