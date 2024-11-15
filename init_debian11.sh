@@ -318,8 +318,8 @@ EOF
 install_docker() {
     # 检查系统内存是否大于512MB
     total_memory=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
-    if [ "$total_memory" -le 524288 ]; then
-        echo "内存不足，无法安装 Docker。需要超过512MB的内存。"
+    if [ "$total_memory" -le 1024288 ]; then
+        echo "内存不足，无法安装 Docker。需要超过1024MB的内存。"
         return
     fi
 

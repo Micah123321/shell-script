@@ -1,4 +1,4 @@
-def generate_gcp_commands(project_name, region, password):
+def generate_gcp_commands(project_name, region, password, network_tier):
     regions = {
         "香港": {
             "template_name": "instance-template-hk",
@@ -20,17 +20,17 @@ def generate_gcp_commands(project_name, region, password):
         }
     }
 
-    # 根据传入的区域生成命令
+    # Validate region
     if region not in regions:
         raise ValueError("不支持的区域。")
 
     region_info = regions[region]
 
-    # 创建实例模板命令
+    # Create instance template command with network tier option
     template_command = f'''
 gcloud compute instance-templates create {region_info["template_name"]} \\
     --machine-type=e2-micro \\
-    --network=default \\
+    --network-interface=network=default,network-tier={network_tier} \\
     --subnet=default \\
     --tags=http-server,https-server \\
     --image-family=debian-11 \\
@@ -42,7 +42,7 @@ gcloud compute instance-templates create {region_info["template_name"]} \\
 # 输入n,选{region_info["subnet_choice"]}
 '''
 
-    # 创建虚拟机实例命令
+    # Create virtual machine instance commands
     instance_commands = ""
     for instance_name in region_info["instance_names"]:
         instance_commands += f'''
@@ -50,19 +50,25 @@ gcloud compute instances create {instance_name} \\
     --source-instance-template={region_info["template_name"]} \\
     --zone={region_info["zone"]} \\
     --project={project_name} \\
-    --metadata=startup-script='sudo apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p {password}'
+    --metadata=startup-script='sudo apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p {password} && bash <(curl -sL https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) --non-interactive'
 '''
 
     return template_command + instance_commands
 
 
-# 获取项目名称、区域和密码
+# Get project name, region, password, and network tier
 project_name = input("请输入项目名称：")
 region = input("请输入区域（香港/台湾/东京）：")
 password = input("请输入自定义密码：")
+network_tier = input("请选择网络类型（普通/高级）：").strip()
+
+# Validate network tier input
+if network_tier not in ["普通", "高级"]:
+    raise ValueError("不支持的网络类型。请使用'普通'或'高级'。")
+network_tier_value = 'STANDARD' if network_tier == '普通' else 'PREMIUM'
 
 try:
-    commands = generate_gcp_commands(project_name, region, password)
+    commands = generate_gcp_commands(project_name, region, password, network_tier_value)
     print(commands)
 except ValueError as e:
     print(e)
