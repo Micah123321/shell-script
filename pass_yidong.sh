@@ -92,13 +92,13 @@ if [[ "$OS" == "debian" ]]; then
 elif [[ "$OS" == "centos" ]]; then
     # CentOS 7 使用不同的软件包名称
     echo_info "检测 CentOS 7 环境，安装必要的依赖包。"
-    PACKAGES="gcc gcc-c++ make libnetfilter_queue-devel libffi-devel openssl-devel iptables git python3 python3-devel python3-pip python3-virtualenv iptables-services"
+    PACKAGES="gcc gcc-c++ make libnetfilter_queue-devel libffi-devel openssl-devel iptables git python3 python3-pip python3-virtualenv iptables-services"
 fi
 
 # 安装必要的系统依赖
 echo_info "安装必要的系统依赖..."
 $INSTALL_CMD $PACKAGES
-$INSTALL_CMD python3-devel
+$INSTALL_CMD python3-dev
 
 # 创建虚拟环境
 VENV_DIR="/opt/geneva_venv"
