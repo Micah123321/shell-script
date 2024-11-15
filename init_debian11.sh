@@ -59,7 +59,7 @@ detect_os() {
 # 函数：更新源列表
 update_sources_list() {
     if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
-        echo_info "检测到谷歌云源，删除谷歌云源..."
+        echo "检测到谷歌云源，删除谷歌云源..."
         rm -f /etc/apt/sources.list.d/google-cloud.list
         $PACKAGE_MANAGER autoremove -y
     fi
@@ -411,14 +411,39 @@ enable_bbr() {
 
 # 移除其他加速模块
 remove_bbr_lotserver() {
+    # 清理与BBR和FQ相关的配置
     sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.d/99-sysctl.conf
     sed -i '/net.core.default_qdisc/d' /etc/sysctl.d/99-sysctl.conf
     sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.d/99-sysctl.conf
     sed -i '/net.ipv4.tcp_ecn/d' /etc/sysctl.conf
     sed -i '/net.core.default_qdisc/d' /etc/sysctl.conf
     sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf
+
+    # 清理其他与内存、TCP相关的配置
+    sed -i '/vm.swappiness/d' /etc/sysctl.conf
+    sed -i '/vm.dirty_ratio/d' /etc/sysctl.conf
+    sed -i '/vm.dirty_background_ratio/d' /etc/sysctl.conf
+    sed -i '/vm.overcommit_memory/d' /etc/sysctl.conf
+    sed -i '/vm.min_free_kbytes/d' /etc/sysctl.conf
+    sed -i '/net.core.rmem_max/d' /etc/sysctl.conf
+    sed -i '/net.core.wmem_max/d' /etc/sysctl.conf
+    sed -i '/net.core.netdev_max_backlog/d' /etc/sysctl.conf
+    sed -i '/net.core.somaxconn/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_rmem/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_wmem/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_max_syn_backlog/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_tw_reuse/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.ip_local_port_range/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_pacing_ca_ratio/d' /etc/sysctl.conf
+    sed -i '/net.ipv4.tcp_window_scaling/d' /etc/sysctl.conf
+    sed -i '/vm.vfs_cache_pressure/d' /etc/sysctl.conf
+    sed -i '/kernel.sched_autogroup_enabled/d' /etc/sysctl.conf
+    sed -i '/kernel.numa_balancing/d' /etc/sysctl.conf
+
+    # 重新加载sysctl配置
     sysctl --system
 
+    # 移除BBR和lotServer的安装脚本和配置
     rm -rf tcpx.sh bbrmod
 
     if [[ -e /appex/bin/lotServer.sh ]]; then
@@ -426,14 +451,41 @@ remove_bbr_lotserver() {
     fi
 }
 
-# 启用BBR+FQ
+# 启用BBR+FQ，并添加其他内核参数
 startbbrfq() {
     remove_bbr_lotserver
+
+    # 启用BBR和FQ
     echo "net.core.default_qdisc=fq" >>/etc/sysctl.d/99-sysctl.conf
     echo "net.ipv4.tcp_congestion_control=bbr" >>/etc/sysctl.d/99-sysctl.conf
+
+    # 添加其他系统参数
+    echo "vm.swappiness=10" >> /etc/sysctl.d/99-sysctl.conf
+    echo "vm.dirty_ratio=15" >> /etc/sysctl.d/99-sysctl.conf
+    echo "vm.dirty_background_ratio=5" >> /etc/sysctl.d/99-sysctl.conf
+    echo "vm.overcommit_memory=1" >> /etc/sysctl.d/99-sysctl.conf
+    echo "vm.min_free_kbytes=65536" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.core.rmem_max=16777216" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.core.wmem_max=16777216" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.core.netdev_max_backlog=250000" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.core.somaxconn=4096" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.tcp_rmem=4096 87380 16777216" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.tcp_wmem=4096 65536 16777216" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.tcp_max_syn_backlog=8192" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.tcp_tw_reuse=1" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.ip_local_port_range=1024 65535" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.tcp_pacing_ca_ratio=110" >> /etc/sysctl.d/99-sysctl.conf
+    echo "net.ipv4.tcp_window_scaling=2" >> /etc/sysctl.d/99-sysctl.conf
+    echo "vm.vfs_cache_pressure=50" >> /etc/sysctl.d/99-sysctl.conf
+    echo "kernel.sched_autogroup_enabled=0" >> /etc/sysctl.d/99-sysctl.conf
+    echo "kernel.numa_balancing=0" >> /etc/sysctl.d/99-sysctl.conf
+
+    # 重新加载sysctl配置
     sysctl --system
-    echo "BBR+FQ修改成功，重启生效！"
+
+    echo "BBR+FQ和内核参数修改成功，重启生效！"
 }
+
 
 # 函数：清理Debian系统
 clean_debian() {

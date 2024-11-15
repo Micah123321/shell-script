@@ -50,7 +50,7 @@ gcloud compute instances create {instance_name} \\
     --source-instance-template={region_info["template_name"]} \\
     --zone={region_info["zone"]} \\
     --project={project_name} \\
-    --metadata=startup-script='sudo apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p {password} && '
+    --metadata=startup-script='sudo apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p {password}'
 '''
 
     return template_command + instance_commands
