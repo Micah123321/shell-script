@@ -1,5 +1,72 @@
 #!/bin/bash
 
+# 检测是否为 Debian 系统
+is_debian() {
+    if [ -f /etc/debian_version ]; then
+        return 0  # 返回 0 表示是 Debian 系统
+    else
+        return 1  # 返回 1 表示不是 Debian 系统
+    fi
+}
+
+# 检查并安装缺失的依赖
+install_dependencies() {
+    echo "正在检测并安装缺失的依赖..."
+
+    # 检查 ping
+    if ! command -v ping &> /dev/null; then
+        echo "未安装 ping，正在安装..."
+        sudo apt-get update -y
+        sudo apt-get install -y iputils-ping
+        echo "ping 安装完成"
+    else
+        echo "ping 已安装"
+    fi
+
+    # 检查 awk
+    if ! command -v awk &> /dev/null; then
+        echo "未安装 awk，正在安装..."
+        sudo apt-get install -y gawk
+        echo "awk 安装完成"
+    else
+        echo "awk 已安装"
+    fi
+
+    # 检查 bc
+    if ! command -v bc &> /dev/null; then
+        echo "未安装 bc，正在安装..."
+        sudo apt-get install -y bc
+        echo "bc 安装完成"
+    else
+        echo "bc 已安装"
+    fi
+}
+
+# 显示进度条
+show_progress() {
+    echo -n "依赖检测中"
+    while true; do
+        for i in {1..3}; do
+            echo -n "."
+            sleep 1
+        done
+        break
+    done
+    echo " 完成"
+}
+
+# 检查并安装依赖
+check_dependencies() {
+    is_debian
+    if [ $? -eq 0 ]; then
+        show_progress
+        install_dependencies
+    else
+        echo "本脚本仅支持 Debian 系统"
+        exit 1
+    fi
+}
+
 # 定义各地区的 IP 列表
 declare -A ips
 ips["北京电信"]="bj-ct-v4.ip.zstaticcdn.com"
@@ -53,20 +120,21 @@ get_region_delay() {
         delay=$(get_ping_delay $ip)
         if [[ $delay =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
             delay_values+=($delay)
-            total=$(echo "$total + $delay" | bc)
+            total=$(echo "$total + $delay" | awk '{print $1 + $2}')
             count=$((count + 1))
 
             # 计算最快和最慢延迟
-            if (( $(echo "$delay < $fastest" | bc -l) )); then
+            if (( $(echo "$delay < $fastest" | awk '{if ($1 < $2) print 1; else print 0}') )); then
                 fastest=$delay
             fi
-            if (( $(echo "$delay > $slowest" | bc -l) )); then
+            if (( $(echo "$delay > $slowest" | awk '{if ($1 > $2) print 1; else print 0}') )); then
                 slowest=$delay
             fi
         fi
     done
 
-    average=$(echo "$total / $count" | bc -l)
+    # 计算平均延迟
+    average=$(echo "$total / $count" | awk '{print $1 / $2}')
     echo "$region: 最快 $fastest ms, 最慢 $slowest ms, 平均 $average ms"
 }
 
