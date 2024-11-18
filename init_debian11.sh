@@ -7,6 +7,7 @@ export DEBIAN_FRONTEND=noninteractive
 INTERACTIVE_MODE=true
 DEBIAN_VERSION=""
 DEBIAN_CODENAME=""
+OS=""
 
 # 检查是否传入非交互模式参数
 if [ "$1" == "--non-interactive" ]; then
@@ -56,12 +57,35 @@ detect_os() {
     fi
 }
 
+# 函数：检测是否运行在GCP上
+detect_gcp() {
+    echo "检测是否运行在 Google Cloud Platform (GCP) 上..."
+    # 访问GCP元数据服务器
+    if curl -s -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/ > /dev/null 2>&1; then
+        echo "检测到当前机器运行在 GCP 上。"
+        execute_gcp_actions
+    else
+        echo "当前机器未运行在 GCP 上。"
+    fi
+}
+
+# 函数：在GCP上执行的操作
+execute_gcp_actions() {
+    echo "执行GCP特定操作：下载并运行 test_delay.sh 脚本..."
+    wget https://raw.githubusercontent.com/Micah123321/shell-script/main/test_delay.sh
+    handle_error $? "下载 test_delay.sh 失败。"
+    chmod +x test_delay.sh
+    ./test_delay.sh
+    handle_error $? "执行 test_delay.sh 失败。"
+    echo "GCP特定操作已完成。"
+}
+
 # 函数：更新源列表
 update_sources_list() {
     if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
         echo "检测到谷歌云源，删除谷歌云源..."
         rm -f /etc/apt/sources.list.d/google-cloud.list
-        $PACKAGE_MANAGER autoremove -y
+        apt autoremove -y
     fi
     # 根据 Debian 版本设置代号
     if [[ "$OS" == "Debian11" ]]; then
@@ -486,7 +510,6 @@ startbbrfq() {
     echo "BBR+FQ和内核参数修改成功，重启生效！"
 }
 
-
 # 函数：清理Debian系统
 clean_debian() {
     echo "清理系统..."
@@ -529,12 +552,16 @@ get_cpu_model() {
 # 函数: 获取CPU占用率
 get_cpu_usage() {
     if [ -f /proc/stat ]; then
+        # 获取第一行cpu数据
         cpu_info=($(grep '^cpu ' /proc/stat))
+        # 计算总时间
         total_cpu_usage=0
         for (( i=1; i<${#cpu_info[@]}; i++ )); do
             total_cpu_usage=$((total_cpu_usage + ${cpu_info[$i]}))
         done
+        # idle时间
         idle_cpu_usage=${cpu_info[4]}
+        # 计算CPU使用率
         cpu_usage_percent=$((100 - ((100 * idle_cpu_usage) / total_cpu_usage)))
     else
         cpu_usage_percent="Unknown"
@@ -618,6 +645,7 @@ enable_warp_streaming() {
 main() {
     check_root
     detect_os
+    detect_gcp  # 添加的GCP检测函数调用
     update_sources_list
     optimize_dns
     install_base_tools
