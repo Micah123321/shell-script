@@ -65,7 +65,6 @@ check_dependencies() {
 }
 
 # 测试单个 IP 的延迟
-# 修改 get_ping_delay 函数，确保命令执行结果正确
 get_ping_delay() {
     local ip=$1
     local name=$2
@@ -82,24 +81,24 @@ get_ping_delay() {
 }
 
 # 测试运营商延迟
-# 修改 test_isp 函数
-# 修改 test_isp 函数，确保正确输出
 test_isp() {
     local isp=$1
     local isp_en=""
+    local result_file
 
     # 将中文运营商名转换为英文变量名
     case "$isp" in
         "电信") isp_en="ct" ;;
         "联通") isp_en="cu" ;;
         "移动") isp_en="cm" ;;
+        *) echo "未知的运营商: $isp"; return 1 ;;
     esac
 
     echo "正在测试 $isp..."
     echo "----------------------------------------"
 
     # 创建临时文件存储结果
-    local result_file="results_${isp_en}.txt"
+    result_file="results_${isp_en}.txt"
     > "$result_file"
 
     # 创建唯一的FIFO管道
@@ -158,27 +157,20 @@ test_isp() {
 
     echo "----------------------------------------"
     if [ "$count" -gt 0 ]; then
-            echo "$isp 测试结果:"
-            echo "最快: $fastest ms"
-            echo "最慢: $slowest ms"
-            echo "平均: $average ms"
-            echo "有效测试点: $count"
+        echo "$isp 测试结果:"
+        echo "最快: $fastest ms"
+        echo "最慢: $slowest ms"
+        echo "平均: $average ms"
+        echo "有效测试点: $count"
+    else
+        echo "$isp 测试结果: 所有请求均超时"
+    fi
 
-            # 使用 export 确保变量在子shell中可用
-            export "${isp_en}_fastest=$fastest"
-            export "${isp_en}_slowest=$slowest"
-            export "${isp_en}_average=$average"
-            export "${isp_en}_count=$count"
-        else
-            echo "$isp 测试结果: 所有请求均超时"
-            export "${isp_en}_fastest=0"
-            export "${isp_en}_slowest=0"
-            export "${isp_en}_average=0"
-            export "${isp_en}_count=0"
-        fi
+    echo "$fastest $slowest $average $count" > "${isp_en}_summary.txt"
 
     rm -f "$result_file"
 }
+
 # 获取当前机器的 IP 地址
 get_current_ip() {
     # 尝试多个方法获取外网 IP
@@ -195,9 +187,8 @@ get_current_ip() {
     fi
     echo "$ip"
 }
+
 # 发送 Telegram 消息
-# 修改 send_telegram_message 函数
-# 修改 send_telegram_message 函数
 send_telegram_message() {
     # 获取当前机器的 IP
     local current_ip=$(get_current_ip)
@@ -205,6 +196,7 @@ send_telegram_message() {
     : "${ct_fastest:=0}" "${ct_slowest:=0}" "${ct_average:=0}" "${ct_count:=0}"
     : "${cu_fastest:=0}" "${cu_slowest:=0}" "${cu_average:=0}" "${cu_count:=0}"
     : "${cm_fastest:=0}" "${cm_slowest:=0}" "${cm_average:=0}" "${cm_count:=0}"
+
     # 构建消息内容
     local message=$(cat <<EOF
 当前机器IP: ${current_ip}
@@ -242,7 +234,7 @@ EOF
         -H 'Content-Type: application/json' \
         -d "{
             \"chat_id\": \"${chat_id}\",
-            \"text\": \"${message}\",
+            \"text\": \"$(echo "$message" | sed 's/"/\\"/g')\",
             \"parse_mode\": \"Markdown\"
         }"
 }
@@ -364,6 +356,20 @@ main() {
 
     # 等待所有测试完成
     wait $pid1 $pid2 $pid3
+
+    # 读取结果并设置变量
+    if [ -f "ct_summary.txt" ]; then
+        read ct_fastest ct_slowest ct_average ct_count < ct_summary.txt
+    fi
+    if [ -f "cu_summary.txt" ]; then
+        read cu_fastest cu_slowest cu_average cu_count < cu_summary.txt
+    fi
+    if [ -f "cm_summary.txt" ]; then
+        read cm_fastest cm_slowest cm_average cm_count < cm_summary.txt
+    fi
+
+    # 删除临时汇总文件
+    rm -f ct_summary.txt cu_summary.txt cm_summary.txt
 
     # 发送汇总消息
     send_telegram_message
