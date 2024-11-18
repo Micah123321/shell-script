@@ -67,7 +67,6 @@ try:
     # Save commands to a shell script file
     script_filename = "create_instances.sh"
     with open(script_filename, "w") as f:
-        f.write("#!/bin/bash\n\n")
         f.write(commands)
 
     # Make the script executable

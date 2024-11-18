@@ -138,35 +138,35 @@ test_isp() {
     # 关闭并清理管道
     exec 3>&-
 
-    # 统计结果，保留最大和平均延迟
+    # 统计结果
     local stats=$(awk '
         !/timeout/ {
             sum += $2
             count++
+            if (NR == 1 || $2 < min) min = $2
             if (NR == 1 || $2 > max) max = $2
         }
         END {
             if (count > 0)
-                printf "%.2f %.2f", max, sum/count
+                printf "%.2f %.2f %.2f %d", min, max, sum/count, count
             else
-                print "0 0"
+                print "0 0 0 0"
         }' "$result_file")
 
-    read -r max_latency average_latency <<< "$stats"
+    read -r fastest slowest average count <<< "$stats"
 
     echo "----------------------------------------"
     if [ "$count" -gt 0 ]; then
         echo "$isp 测试结果:"
-        echo "最高: $max_latency ms"
-        echo "平均: $average_latency ms"
+        echo "最快: $fastest ms"
+        echo "最慢: $slowest ms"
+        echo "平均: $average ms"
+        echo "有效测试点: $count"
     else
         echo "$isp 测试结果: 所有请求均超时"
-        max_latency=0
-        average_latency=0
     fi
 
-    # 仅保存最高和平均延迟
-    echo "$max_latency $average_latency" > "${isp_en}_summary.txt"
+    echo "$fastest $slowest $average $count" > "${isp_en}_summary.txt"
 
     rm -f "$result_file"
 }
@@ -193,16 +193,16 @@ send_telegram_message() {
     # 获取当前机器的 IP
     local current_ip=$(get_current_ip)
     # 检查变量是否存在，如果不存在则设置默认值
-    : "${ct_average:=0}" "${ct_max_latency:=0}"
-    : "${cu_average:=0}" "${cu_max_latency:=0}"
-    : "${cm_average:=0}" "${cm_max_latency:=0}"
+    : "${ct_fastest:=0}" "${ct_slowest:=0}" "${ct_average:=0}" "${ct_count:=0}"
+    : "${cu_fastest:=0}" "${cu_slowest:=0}" "${cu_average:=0}" "${cu_count:=0}"
+    : "${cm_fastest:=0}" "${cm_slowest:=0}" "${cm_average:=0}" "${cm_count:=0}"
 
-    # 构建消息内容，仅包含平均延迟和最高延迟
+    # 构建消息内容
     local message=$(cat <<EOF
-IP: ${current_ip}
-电信平均: ${ct_average} ms 最高: ${ct_max_latency} ms
-联通平均: ${cu_average} ms 最高: ${cu_max_latency} ms
-移动平均: ${cm_average} ms 最高: ${cm_max_latency} ms
+当前机器IP: ${current_ip}
+电信:最慢: ${ct_slowest} ms 平均: ${ct_average} ms
+联通:最慢: ${cu_slowest} ms 平均: ${cu_average} ms
+移动:最慢: ${cm_slowest} ms 平均: ${cm_average} ms
 测试时间: $(date '+%Y-%m-%d %H:%M:%S')
 EOF
 )
@@ -339,15 +339,15 @@ main() {
     # 等待所有测试完成
     wait $pid1 $pid2 $pid3
 
-    # 读取结果并设置变量，仅读取最高和平均延迟
+    # 读取结果并设置变量
     if [ -f "ct_summary.txt" ]; then
-        read ct_max_latency ct_average < ct_summary.txt
+        read ct_fastest ct_slowest ct_average ct_count < ct_summary.txt
     fi
     if [ -f "cu_summary.txt" ]; then
-        read cu_max_latency cu_average < cu_summary.txt
+        read cu_fastest cu_slowest cu_average cu_count < cu_summary.txt
     fi
     if [ -f "cm_summary.txt" ]; then
-        read cm_max_latency cm_average < cm_summary.txt
+        read cm_fastest cm_slowest cm_average cm_count < cm_summary.txt
     fi
 
     # 删除临时汇总文件
@@ -357,5 +357,5 @@ main() {
     send_telegram_message
 }
 
-# 运行主函数并记录日志
-main | tee /var/log/setup_script.log
+# 运行主函数
+main
