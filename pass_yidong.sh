@@ -235,6 +235,14 @@ iptables -D OUTPUT -p tcp --sport 443 --tcp-flags SYN,RST,ACK,FIN,PSH SYN,ACK -j
 iptables -I OUTPUT -p tcp --sport 80 --tcp-flags SYN,RST,ACK,FIN,PSH SYN,ACK -j NFQUEUE --queue-num 100
 iptables -I OUTPUT -p tcp --sport 443 --tcp-flags SYN,RST,ACK,FIN,PSH SYN,ACK -j NFQUEUE --queue-num 101
 
+# 新增：配置 SYN-ACK 数据包的 iptables 规则，队列号 102
+echo_info "配置 SYN-ACK 数据包的 iptables 规则..."
+iptables -D OUTPUT -p tcp --sport 80 --tcp-flags SYN,ACK SYN,ACK -j NFQUEUE --queue-num 102 2>/dev/null || true
+iptables -D OUTPUT -p tcp --sport 443 --tcp-flags SYN,ACK SYN,ACK -j NFQUEUE --queue-num 102 2>/dev/null || true
+
+iptables -I OUTPUT -p tcp --sport 80 --tcp-flags SYN,ACK SYN,ACK -j NFQUEUE --queue-num 102
+iptables -I OUTPUT -p tcp --sport 443 --tcp-flags SYN,ACK SYN,ACK -j NFQUEUE --queue-num 102
+
 # 保存 iptables 规则
 echo_info "保存 iptables 规则..."
 if [[ "$OS" == "debian" ]]; then
@@ -249,6 +257,7 @@ fi
 SERVICE_DIR="/etc/systemd/system"
 SERVICE_FILE_100="$SERVICE_DIR/geneva-100.service"
 SERVICE_FILE_101="$SERVICE_DIR/geneva-101.service"
+SERVICE_FILE_102="$SERVICE_DIR/geneva-102.service"  # 新增服务文件
 
 echo_info "创建 Systemd 服务文件 $SERVICE_FILE_100..."
 cat <<EOF > "$SERVICE_FILE_100"
@@ -282,6 +291,23 @@ User=root
 WantedBy=multi-user.target
 EOF
 
+# 新增：创建 Systemd 服务文件 geneva-102.service
+echo_info "创建 Systemd 服务文件 $SERVICE_FILE_102..."
+cat <<EOF > "$SERVICE_FILE_102"
+[Unit]
+Description=Geneva TCP Window Modifier - Queue 102 (SYN-ACK)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$VENV_DIR/bin/python /opt/geneva/geneva.py -q 102 -w 25
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 # 重新加载 Systemd 守护进程
 echo_info "重新加载 Systemd 守护进程..."
 systemctl daemon-reload
@@ -296,12 +322,20 @@ echo_info "启动 geneva-101.service 服务..."
 systemctl start geneva-101.service
 systemctl enable geneva-101.service
 
+# 启动并启用 geneva-102.service (新增)
+echo_info "启动 geneva-102.service 服务..."
+systemctl start geneva-102.service
+systemctl enable geneva-102.service
+
 # 检查服务状态
 echo_info "检查 geneva-100.service 服务状态..."
 systemctl status geneva-100.service --no-pager
 
 echo_info "检查 geneva-101.service 服务状态..."
 systemctl status geneva-101.service --no-pager
+
+echo_info "检查 geneva-102.service 服务状态..."
+systemctl status geneva-102.service --no-pager
 
 # 完成
 echo_info "Geneva TCP Window Modifier 安装和配置完成！"
@@ -310,3 +344,4 @@ echo_info "Geneva TCP Window Modifier 安装和配置完成！"
 echo_info "您可以使用以下命令查看服务日志："
 echo -e "\e[34mjournalctl -u geneva-100.service -f\e[0m"
 echo -e "\e[34mjournalctl -u geneva-101.service -f\e[0m"
+echo -e "\e[34mjournalctl -u geneva-102.service -f\e[0m"  # 新增提示
