@@ -313,14 +313,14 @@ echo_info "重新加载 Systemd 守护进程..."
 systemctl daemon-reload
 
 # 启动并启用 geneva-100.service
-echo_info "启动 geneva-100.service 服务..."
-systemctl start geneva-100.service
-systemctl enable geneva-100.service
-
-# 启动并启用 geneva-101.service
-echo_info "启动 geneva-101.service 服务..."
-systemctl start geneva-101.service
-systemctl enable geneva-101.service
+#echo_info "启动 geneva-100.service 服务..."
+#systemctl start geneva-100.service
+#systemctl enable geneva-100.service
+#
+## 启动并启用 geneva-101.service
+#echo_info "启动 geneva-101.service 服务..."
+#systemctl start geneva-101.service
+#systemctl enable geneva-101.service
 
 # 启动并启用 geneva-102.service (新增)
 echo_info "启动 geneva-102.service 服务..."
@@ -328,11 +328,11 @@ systemctl start geneva-102.service
 systemctl enable geneva-102.service
 
 # 检查服务状态
-echo_info "检查 geneva-100.service 服务状态..."
-systemctl status geneva-100.service --no-pager
-
-echo_info "检查 geneva-101.service 服务状态..."
-systemctl status geneva-101.service --no-pager
+#echo_info "检查 geneva-100.service 服务状态..."
+#systemctl status geneva-100.service --no-pager
+#
+#echo_info "检查 geneva-101.service 服务状态..."
+#systemctl status geneva-101.service --no-pager
 
 echo_info "检查 geneva-102.service 服务状态..."
 systemctl status geneva-102.service --no-pager

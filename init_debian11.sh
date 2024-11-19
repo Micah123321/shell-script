@@ -60,14 +60,15 @@ detect_os() {
 # 函数：检测是否运行在GCP上
 detect_gcp() {
     echo "检测是否运行在 Google Cloud Platform (GCP) 上..."
-    # 访问GCP元数据服务器
-    if curl -s -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/ > /dev/null 2>&1; then
+    # 使用超时参数防止卡住
+    if timeout 3s curl -s -f -H "Metadata-Flavor: Google" http://169.254.169.254/computeMetadata/v1/ > /dev/null 2>&1; then
         echo "检测到当前机器运行在 GCP 上。"
         execute_gcp_actions
     else
         echo "当前机器未运行在 GCP 上。"
     fi
 }
+
 
 # 函数：在GCP上执行的操作
 execute_gcp_actions() {
