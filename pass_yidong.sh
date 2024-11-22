@@ -15,6 +15,18 @@ echo_error() {
     echo -e "\e[31m[ERROR]\e[0m $1"
     exit 1
 }
+# 在脚本开头添加检测函数
+check_is_china() {
+    echo_info "正在检测服务器环境..."
+    # 尝试访问 Google,超时时间设置为 3 秒
+    if curl -m 3 -s www.google.com -o /dev/null; then
+        echo_info "可以访问 Google,使用官方软件源..."
+        return 1  # 可以访问 Google,不是中国机器
+    else
+        echo_info "无法访问 Google,判断为中国环境,将使用国内软件源..."
+        return 0  # 不能访问 Google,是中国机器
+    fi
+}
 
 # 检查是否以 root 权限运行
 if [[ "$EUID" -ne 0 ]]; then
@@ -144,8 +156,26 @@ fi
 echo_info "激活虚拟环境并安装必要的 Python 包..."
 # shellcheck disable=SC1090
 source "$VENV_DIR/bin/activate"
-pip install --upgrade pip
-pip install scapy netfilterqueue
+
+# 检查是否为中国机器并相应配置pip源
+if check_is_china; then
+    echo_info "配置使用清华镜像源..."
+    mkdir -p ~/.pip
+    cat > ~/.pip/pip.conf << EOF
+[global]
+index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+trusted-host = pypi.tuna.tsinghua.edu.cn
+EOF
+    PIP_SOURCE="-i https://pypi.tuna.tsinghua.edu.cn/simple"
+else
+    echo_info "使用官方软件源..."
+    PIP_SOURCE=""
+fi
+
+# 升级pip并安装必要包
+echo_info "升级pip并安装必要包..."
+python3 -m pip install --upgrade pip $PIP_SOURCE
+python3 -m pip install scapy netfilterqueue $PIP_SOURCE
 deactivate
 
 # 保存 geneva.py 脚本
