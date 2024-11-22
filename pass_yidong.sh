@@ -27,7 +27,7 @@ if [ -f /etc/os-release ]; then
     OS=$ID
     VERSION_ID_NUM=$(echo "$VERSION_ID" | cut -d '.' -f1)
 else
-    echo_error "无法检测操作系统。请确保是 Debian 或 CentOS 系统。"
+    echo_error "无法检测操作系统。请确保是 Debian、Ubuntu 或 CentOS 系统。"
 fi
 
 # 根据操作系统设置变量
@@ -43,6 +43,18 @@ if [[ "$OS" == "debian" ]]; then
     fi
     echo_info "检测到 Debian $DEBIAN_VERSION"
 
+elif [[ "$OS" == "ubuntu" ]]; then
+    PACKAGE_MANAGER="apt"
+    UPDATE_CMD="apt-get update -y"
+    UPGRADE_CMD="apt-get upgrade -y"
+    INSTALL_CMD="apt-get install -y"
+    UBUNTU_VERSION=$VERSION_ID_NUM
+    # 仅支持 Ubuntu 22.04
+    if [[ "$VERSION_ID" != "22.04" ]]; then
+        echo_error "此脚本仅支持 Ubuntu 22.04。当前版本：$VERSION_ID"
+    fi
+    echo_info "检测到 Ubuntu $VERSION_ID"
+
 elif [[ "$OS" == "centos" ]]; then
     PACKAGE_MANAGER="yum"
     UPDATE_CMD="yum update -y"
@@ -55,7 +67,26 @@ elif [[ "$OS" == "centos" ]]; then
     fi
     echo_info "检测到 CentOS $CENTOS_VERSION"
 else
-    echo_error "不支持的操作系统：$OS。仅支持 Debian 11、Debian 12 和 CentOS 7。"
+    echo_error "不支持的操作系统：$OS。仅支持 Debian 11、Debian 12、Ubuntu 22.04 和 CentOS 7。"
+fi
+
+# 针对 Ubuntu/Debian 的包安装部分
+if [[ "$OS" == "ubuntu" || "$OS" == "debian" ]]; then
+    # 检查是否已安装 python3
+    if command -v python3 >/dev/null 2>&1; then
+        echo_info "检测到 python3 已安装，安装 python3-dev 及其他相关包。"
+        PACKAGES="build-essential libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent python3-venv python3-dev"
+    else
+        echo_info "未检测到 python3，安装 python3 及相关包。"
+        PACKAGES="build-essential python3 python3-dev python3-pip python3-venv libnetfilter-queue-dev libffi-dev libssl-dev iptables git netfilter-persistent"
+    fi
+
+    # 针对 Ubuntu/Debian，检测是否为谷歌云并删除源
+    if [ -f /etc/apt/sources.list.d/google-cloud.list ]; then
+        echo_info "检测到谷歌云源，删除谷歌云源..."
+        rm -f /etc/apt/sources.list.d/google-cloud.list
+        $PACKAGE_MANAGER autoremove -y
+    fi
 fi
 
 # 针对 CentOS 安装 EPEL 仓库
