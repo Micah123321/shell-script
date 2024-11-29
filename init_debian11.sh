@@ -32,6 +32,7 @@ check_root() {
 }
 
 # 函数：检测系统类型和版本
+# 函数：检测系统类型和版本
 detect_os() {
     if [ -f /etc/debian_version ]; then
         DEBIAN_VERSION=$(lsb_release -sr)
@@ -40,22 +41,69 @@ detect_os() {
             OS="Debian11"
         elif [[ "$DEBIAN_VERSION" == "12"* ]]; then
             OS="Debian12"
+        elif [[ "$DEBIAN_VERSION" == "10"* ]]; then
+            echo "检测到系统为 Debian $DEBIAN_VERSION (代号: $DEBIAN_CODENAME)。"
+            echo "仅支持 Debian 11、12，自动将系统升级到 Debian 11。"
+            upgrade_debian10_to_11
+            detect_os # 重新检测系统信息
         else
             echo "不支持的 Debian 版本: $DEBIAN_VERSION。仅支持 Debian 11 和 12。"
             exit 1
         fi
-        echo "检测到的操作系统: $OS (Debian $DEBIAN_VERSION, 代号: $DEBIAN_CODENAME)"
-    elif grep -qi ubuntu /etc/os-release; then
-        OS="Ubuntu"
-        echo "检测到的操作系统: $OS"
-    elif [ -f /etc/redhat-release ]; then
-        OS="CentOS"
-        echo "检测到的操作系统: $OS"
+        echo "检测到操作系统: $OS (Debian $DEBIAN_VERSION, 代号: $DEBIAN_CODENAME)"
     else
         echo "不支持的操作系统。"
         exit 1
     fi
 }
+
+# 函数：升级 Debian 10 到 Debian 11
+upgrade_debian10_to_11() {
+    echo "开始升级 Debian 10 到 Debian 11..."
+
+    # 备份源列表
+    cp /etc/apt/sources.list /etc/apt/sources.list.bak
+    echo "已备份当前的 APT 源文件到 /etc/apt/sources.list.bak"
+
+    # 更新源列表为 Debian 11
+    cat > /etc/apt/sources.list << EOF
+deb http://deb.debian.org/debian bullseye main contrib non-free
+deb-src http://deb.debian.org/debian bullseye main contrib non-free
+
+deb http://deb.debian.org/debian-security bullseye-security main contrib non-free
+deb-src http://deb.debian.org/debian-security bullseye-security main contrib non-free
+
+deb http://deb.debian.org/debian bullseye-updates main contrib non-free
+deb-src http://deb.debian.org/debian bullseye-updates main contrib non-free
+EOF
+
+    handle_error $? "更新 APT 源列表失败。"
+
+    # 更新和升级系统
+    apt update
+    handle_error $? "更新包列表失败。"
+    apt upgrade -y
+    handle_error $? "升级系统失败。"
+    apt full-upgrade -y
+    handle_error $? "执行完整升级失败。"
+
+    # 删除不需要的软件包
+    apt autoremove --purge -y
+    apt autoclean -y
+    echo "已完成系统包的清理。"
+
+    # 更新内核和重启系统
+    echo "升级到 Debian 11 已完成，现在需要重启系统以应用更改。"
+    read -p "是否立即重启系统？ [y/n] " -e reboot_choice
+    reboot_choice=${reboot_choice:-y}
+    if [[ $reboot_choice == "y" || $reboot_choice == "Y" ]]; then
+        reboot
+    else
+        echo "请记得稍后手动重启系统以完成升级。"
+        exit 0
+    fi
+}
+
 
 # 函数：检测是否运行在GCP上
 detect_gcp() {
