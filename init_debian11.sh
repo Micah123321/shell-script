@@ -32,11 +32,19 @@ check_root() {
 }
 
 # 函数：检测系统类型和版本
-# 函数：检测系统类型和版本
 detect_os() {
     if [ -f /etc/debian_version ]; then
+        # 检查 lsb_release 是否存在，如果不存在则安装
+        if ! command -v lsb_release &>/dev/null; then
+            echo "未检测到 lsb_release 工具，正在安装..."
+            apt update
+            apt install -y lsb-release
+            handle_error $? "安装 lsb_release 失败。"
+        fi
+
         DEBIAN_VERSION=$(lsb_release -sr)
         DEBIAN_CODENAME=$(lsb_release -sc)
+
         if [[ "$DEBIAN_VERSION" == "11"* ]]; then
             OS="Debian11"
         elif [[ "$DEBIAN_VERSION" == "12"* ]]; then
