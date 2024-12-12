@@ -147,3 +147,26 @@ wget https://raw.githubusercontent.com/Micah123321/shell-script/main/test_delay.
 chmod +x test_delay.sh && ./test_delay.sh
 ```
 
+## setup_swap
+
+> 一键设置/调整swap大小脚本
+
+```shell
+apt install -y curl && bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_swap.sh)
+```
+
+### 脚本讲解
+
+这个脚本可以帮助你在Debian 11/12系统上轻松设置或调整swap分区的大小。主要功能包括：
+
+1. 支持创建新的swap分区
+2. 如果已存在swap，可以调整其大小
+3. 自动配置开机自启动
+4. 设置合适的swappiness值
+5. 自动设置正确的文件权限
+
+使用方法：
+1. 运行脚本后，输入期望的swap大小(单位:GB)
+2. 脚本会自动处理创建或调整swap的过程
+3. 完成后会显示当前内存和swap的使用情况
+

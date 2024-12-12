@@ -188,7 +188,7 @@ gcloud compute instances create {instance_name_with_suffix} \\
     --boot-disk-type=pd-balanced \\
     --boot-disk-auto-delete \\
     --labels=goog-ec-src=vm_add-gcloud \\
-    --metadata=startup-script='sudo apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p {password} && bash <(curl -sL https://ghp.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) --non-interactive' \\
+    --metadata=startup-script='sudo apt install -y curl && bash <(curl -sSL https://raw.githubusercontent.com/micah123321/shell-script/main/root_password.sh) -p {password} && bash <(curl -sL https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) --non-interactive' \\
     --zone={full_zone} \\
     --project={project_name}
 '''
