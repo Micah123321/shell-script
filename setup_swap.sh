@@ -15,14 +15,14 @@ fi
 # 获取用户输入的swap大小
 read -p "请输入需要设置的swap大小(GB): " swap_size
 
-# 验证输入是否为正整数
-if ! [[ "$swap_size" =~ ^[1-9][0-9]*$ ]]; then
-    echo "请输入有效的正整数!"
+# 验证输入是否为正数（支持小数）
+if ! [[ "$swap_size" =~ ^[0-9]*\.?[0-9]+$ ]] || [ "$(echo "$swap_size <= 0" | bc)" -eq 1 ]; then
+    echo "请输入有效的正数!"
     exit 1
 fi
 
-# 转换GB到MB
-swap_size_mb=$((swap_size * 1024))
+# 转换GB到MB（使用bc处理小数）
+swap_size_mb=$(echo "$swap_size * 1024" | bc | cut -d. -f1)
 
 # 检查是否已存在swap
 if swapon --show | grep -q "/swapfile"; then

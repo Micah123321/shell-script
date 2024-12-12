@@ -5,7 +5,7 @@
 > 初始化Debian 11系统
 
 ```shell
-apt install -y curl && bash <(curl -sL https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) [--non-interactive]
+apt update && apt install -y curl && bash <(curl -sL https://gh-proxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/init_debian11.sh) [--non-interactive]
 ```
 
 ### 脚本讲解
@@ -73,7 +73,7 @@ maxretry = 3
 - `[sshd]`部分是一个监狱的定义，专门用于监控SSH服务的登录尝试。
 - `enabled = true`表示这个监狱是激活状态。
 - `port = 22`指定了SSH服务监听的端口号，默认是22。
-- `filter = sshd`指定了Fail2Ban使用哪个过滤器来解析日志文件中的登录失败尝试。过滤器定义在`/etc/fail2ban/filter.d/`目录下。
+- `filter = sshd`指定了Fail2Ban使用哪个过滤器来解析日志文件中的登录失败尝试。过滤器定义在`/etc/fail2ban/filter.d/`目录。
 - `logpath = /var/log/auth.log`（对于Debian系）或`logpath = /var/log/secure`
   （对于CentOS系）指定了Fail2Ban监控的日志文件路径。这些路径分别适用于Debian系和CentOS系的系统。
 - `bantime = 1d`设置了封禁的时长，这里是1天。封禁期满后，IP地址将被解封。
@@ -152,7 +152,7 @@ chmod +x test_delay.sh && ./test_delay.sh
 > 一键设置/调整swap大小脚本
 
 ```shell
-apt install -y curl && bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_swap.sh)
+apt update && apt install -y curl && bash <(curl -L -s https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_swap.sh)
 ```
 
 ### 脚本讲解
