@@ -272,7 +272,7 @@ install_base_tools() {
     handle_error $? "系统更新和升级失败。"
 
     echo "安装基础工具..."
-    apt install -y lsof curl git sudo wget net-tools screen iperf3 dnsutils telnet openssl btop
+    apt install -y lsof curl git sudo wget net-tools screen iperf3 dnsutils telnet openssl btop nftables
     handle_error $? "安装基础工具失败。"
     echo "基础工具安装完成。"
 }
