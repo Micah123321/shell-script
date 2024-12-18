@@ -103,7 +103,7 @@ def generate_gcp_commands(project_name, region, password, network_tier):
             "instance_names": ["usw1", "usw2", "usw3", "usw4"],
             "subnet_choice": "default"
         },
-        "us-west2": { # 美国西部 (洛杉��)
+        "us-west2": { # 美国西部 (洛杉矶)
             "zone_prefix": "us-west2",
             "instance_names": ["usw21", "usw22", "usw23", "usw24"],
             "subnet_choice": "default"
@@ -269,7 +269,7 @@ def generate_script_filename(region, network_tier):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # 生成带时间戳��配置信息的文件名
+    # 生成带时间戳和配置信息的文件名
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     network_type = "premium" if network_tier == "PREMIUM" else "standard"
     return os.path.join(output_dir, f"{region}_{network_type}_{timestamp}.sh")
