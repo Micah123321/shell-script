@@ -1,1 +1,7 @@
 /.idea/
+# 忽略生成的GCP命令脚本目录
+gcp_scripts/
+# 忽略环境变量文件，但保留示例文件
+.env
+.env.*
+!.env.example

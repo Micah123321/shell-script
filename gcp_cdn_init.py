@@ -1,6 +1,24 @@
 import random
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
+
+# 预设配置
+PRESETS = {
+    "1": {
+        "name": "台湾高级网络",
+        "region": "asia-east1",
+        "network_tier": "PREMIUM",
+    },
+    "2": {
+        "name": "香港普通网络",
+        "region": "asia-east2", 
+        "network_tier": "STANDARD",
+    }
+}
 
 def generate_gcp_commands(project_name, region, password, network_tier):
     regions = {
@@ -160,20 +178,15 @@ def generate_gcp_commands(project_name, region, password, network_tier):
 
     zone_suffix_choices = ['a', 'b', 'c']
 
-    # Validate region
     if region not in regions:
         raise ValueError("不支持的区域。请选择有效的GCP区域。")
 
     region_info = regions[region]
 
-    # Create virtual machine instance commands with random suffix for each instance name
     instance_commands = ""
     for instance_name in region_info["instance_names"]:
-        # Add random suffix to instance name
         random_instance_number = random.randint(1000, 9999)
         instance_name_with_suffix = f"{instance_name}-{random_instance_number}"
-
-        # Randomly select a zone suffix
         zone_suffix = random.choice(zone_suffix_choices)
         full_zone = f"{region_info['zone_prefix']}-{zone_suffix}"
 
@@ -195,39 +208,74 @@ gcloud compute instances create {instance_name_with_suffix} \\
 
     return instance_commands
 
-
-def generate_script_filename():
-    # 使用当前日期和时间生成唯一编号
+def generate_script_filename(region, network_tier):
+    # 确保输出目录存在
+    output_dir = "gcp_scripts"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # 生成带时间戳和配置信息的文件名
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return f"create_instances_{timestamp}.sh"
+    network_type = "premium" if network_tier == "PREMIUM" else "standard"
+    return os.path.join(output_dir, f"{region}_{network_type}_{timestamp}.sh")
 
+def show_menu():
+    print("\n=== GCP 实例创建预设菜单 ===")
+    print("预设选项:")
+    for key, preset in PRESETS.items():
+        print(f"{key}. {preset['name']}")
+    print("3. 自定义区域和网络")
+    return input("\n请选择预设选项 (1-3): ")
 
-# Get project name, region, password, and network tier
-project_name = input("请输入项目名称：")  # 例如 famous-cursor-441805-n8
-region = input("请输入区域（如 us-central1、asia-east1 等）：")
-password = input("请输入自定义密码：")
-network_tier = input("请选择网络类型（普通/高级）：").strip()
+def main():
+    # 获取项目名称
+    project_name = input("请输入项目名称：")  # 例如 famous-cursor-441805-n8
+    
+    # 显示菜单并获取选择
+    choice = show_menu()
+    
+    # 从环境变量获取默认密码，如果未设置则使用默认值
+    password = os.getenv('GCP_DEFAULT_PASSWORD', 'Aa112211')
+    
+    if choice in PRESETS:
+        # 使用预设配置
+        preset = PRESETS[choice]
+        region = preset["region"]
+        network_tier = preset["network_tier"]
+        print(f"\n使用预设: {preset['name']}")
+        
+    elif choice == "3":
+        # 自定义配置
+        region = input("请输入区域（如 us-central1、asia-east1 等）：")
+        network_tier_input = input("请选择网络类型（普通/高级）：").strip()
+        if network_tier_input not in ["普通", "高级"]:
+            raise ValueError("不支持的网络类型。请使用'普通'或'高级'。")
+        network_tier = 'STANDARD' if network_tier_input == '普通' else 'PREMIUM'
+    else:
+        print("无效的选择！")
+        return
 
-# Validate network tier input
-if network_tier not in ["普通", "高级"]:
-    raise ValueError("不支持的网络类型。请使用'普通'或'高级'。")
-network_tier_value = 'STANDARD' if network_tier == '普通' else 'PREMIUM'
+    try:
+        commands = generate_gcp_commands(project_name, region, password, network_tier)
+        script_filename = generate_script_filename(region, network_tier)
 
-try:
-    commands = generate_gcp_commands(project_name, region, password, network_tier_value)
+        # 保存命令到shell脚本文件
+        with open(script_filename, "w") as f:
+            f.write("#!/bin/bash\n\n")
+            f.write(commands)
 
-    # Generate a unique script filename with timestamp
-    script_filename = generate_script_filename()
+        # 设置脚本可执行权限
+        os.chmod(script_filename, 0o755)
 
-    # Save commands to a shell script file
-    with open(script_filename, "w") as f:
-        f.write("#!/bin/bash\n\n")
-        f.write(commands)
+        # 显示相对路径
+        relative_path = os.path.relpath(script_filename)
+        print(f"\n生成的GCP命令已保存到 {relative_path} 文件中。")
+        print(f"您可以使用以下命令执行该脚本：\n./{relative_path}")
+        
+    except ValueError as e:
+        print(f"错误: {e}")
+    except OSError as e:
+        print(f"文件操作错误: {e}")
 
-    # Make the script executable
-    os.chmod(script_filename, 0o755)
-
-    print(f"生成的GCP命令已保存到 {script_filename} 文件中。")
-    print(f"您可以使用以下命令执行该脚本：\n./{script_filename}")
-except ValueError as e:
-    print(e)
+if __name__ == "__main__":
+    main()
