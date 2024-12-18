@@ -701,29 +701,46 @@ enable_warp_streaming() {
 # 添加检查内存和设置swap的函数
 check_and_setup_swap() {
     echo "检查内存状态..."
-    
+
     # 获取总内存(KB)并转换为GB
     total_mem_gb=$(awk '/MemTotal/ {printf "%.2f", $2/1024/1024}' /proc/meminfo)
-    
+    echo "当前系统内存: ${total_mem_gb}GB"
+
     # 检查是否已开启swap
     swap_enabled=$(swapon --show | wc -l)
-    
+
+    if [ "$swap_enabled" -gt 0 ]; then
+        # 如果已开启swap，显示当前swap信息
+        swap_info=$(free -h | awk '/Swap:/ {print $2}')
+        echo "检测到已开启swap，当前大小: ${swap_info}"
+        return
+    else
+        echo "当前未开启swap"
+    fi
+
     # 获取可用磁盘空间(GB)
     free_disk_gb=$(df -BG / | awk 'NR==2 {gsub("G","",$4); print $4}')
-    
+    echo "可用磁盘空间: ${free_disk_gb}GB"
+
     # 如果内存小于1.1GB，没有swap，且剩余空间大于5GB
     if (( $(echo "$total_mem_gb < 1.1" | bc -l) )) && [ "$swap_enabled" -eq 0 ] && [ "$free_disk_gb" -gt 5 ]; then
         echo "检测到内存不足1.1GB，且未开启swap，将自动设置1GB的swap空间..."
-        
+
         # 下载setup_swap.sh脚本
         curl -L -s -o setup_swap.sh https://ghproxy.535888.xyz/https://raw.githubusercontent.com/Micah123321/shell-script/main/setup_swap.sh
         chmod +x setup_swap.sh
-        
+
         # 自动输入1GB并执行脚本
         echo "1" | ./setup_swap.sh
-        
+
         # 清理脚本文件
         rm -f setup_swap.sh
+    else
+        if (( $(echo "$total_mem_gb >= 1.1" | bc -l) )); then
+            echo "系统内存充足，无需设置swap"
+        elif [ "$free_disk_gb" -le 5 ]; then
+            echo "可用磁盘空间不足5GB，无法设置swap"
+        fi
     fi
 }
 

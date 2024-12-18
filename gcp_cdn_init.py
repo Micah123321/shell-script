@@ -20,6 +20,61 @@ PRESETS = {
     }
 }
 
+def get_country_code(region):
+    """获取区域对应的国家编码"""
+    country_codes = {
+        # 亚洲
+        "asia-east1": "tw",      # 台湾
+        "asia-east2": "hk",      # 香港
+        "asia-northeast1": "jp",  # 日本
+        "asia-northeast2": "jp2", # 日本大阪
+        "asia-northeast3": "kr",  # 韩国
+        "asia-southeast1": "sg",  # 新加坡
+        "asia-southeast2": "id",  # 印尼
+        "asia-south1": "in",     # 印度
+        
+        # 美国
+        "us-central1": "us-c1",  # 爱荷华
+        "us-central2": "us-c2",  # 伊利诺伊
+        "us-east1": "us-e1",     # 南卡罗来纳
+        "us-east4": "us-e4",     # 弗吉尼亚
+        "us-west1": "us-w1",     # 俄勒冈
+        "us-west2": "us-w2",     # 洛杉矶
+        "us-west3": "us-w3",     # 盐湖城
+        "us-west4": "us-w4",     # 拉斯维加斯
+        
+        # 欧洲
+        "europe-west1": "eu-w1", # 比利时
+        "europe-west2": "eu-w2", # 伦敦
+        "europe-west3": "eu-w3", # 法兰克福
+        "europe-west4": "eu-w4", # 荷兰
+        "europe-west6": "eu-w6", # 苏黎世
+        "europe-north1": "eu-n1", # 芬兰
+        
+        # 其他地区
+        "australia-southeast1": "au", # 澳大利亚
+        "southamerica-east1": "br",  # 巴西
+        "northamerica-northeast1": "ca", # 加拿大
+    }
+    return country_codes.get(region, region[:2])
+
+def generate_instance_name(region, network_tier, instance_base):
+    """生成新的实例名称格式"""
+    # 获取国家/地区编码
+    country = get_country_code(region)
+    
+    # 网络类型缩写
+    net_type = "p" if network_tier == "PREMIUM" else "s"
+    
+    # 生成时间戳
+    timestamp = datetime.now().strftime("%m%d%H%M")
+    
+    # 生成4位随机数
+    random_suffix = str(random.randint(1000, 9999))
+    
+    # 组合新的实例名称: 国家-网络-日期时间-随机数
+    return f"{country}-{net_type}-{timestamp}-{random_suffix}"
+
 def generate_gcp_commands(project_name, region, password, network_tier):
     regions = {
         # 美国区域
@@ -48,7 +103,7 @@ def generate_gcp_commands(project_name, region, password, network_tier):
             "instance_names": ["usw1", "usw2", "usw3", "usw4"],
             "subnet_choice": "default"
         },
-        "us-west2": { # 美国西部 (洛杉矶)
+        "us-west2": { # 美国西部 (洛杉��)
             "zone_prefix": "us-west2",
             "instance_names": ["usw21", "usw22", "usw23", "usw24"],
             "subnet_choice": "default"
@@ -185,8 +240,8 @@ def generate_gcp_commands(project_name, region, password, network_tier):
 
     instance_commands = ""
     for instance_name in region_info["instance_names"]:
-        random_instance_number = random.randint(1000, 9999)
-        instance_name_with_suffix = f"{instance_name}-{random_instance_number}"
+        # 使用新的命名方式
+        instance_name_with_suffix = generate_instance_name(region, network_tier, instance_name)
         zone_suffix = random.choice(zone_suffix_choices)
         full_zone = f"{region_info['zone_prefix']}-{zone_suffix}"
 
@@ -214,7 +269,7 @@ def generate_script_filename(region, network_tier):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
-    # 生成带时间戳和配置信息的文件名
+    # 生成带时间戳��配置信息的文件名
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     network_type = "premium" if network_tier == "PREMIUM" else "standard"
     return os.path.join(output_dir, f"{region}_{network_type}_{timestamp}.sh")
